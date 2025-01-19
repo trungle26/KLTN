@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "470044743741",
+    "project_id": "viberide-65fa5",
+    "storage_bucket": "viberide-65fa5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:470044743741:android:54a2e830a4ecbc53523254",
+        "android_client_info": {
+          "package_name": "com.trungld.viberide"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAo_lA9UYwXLH5-8mXlgHV-Z4gxYN_sLc8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
