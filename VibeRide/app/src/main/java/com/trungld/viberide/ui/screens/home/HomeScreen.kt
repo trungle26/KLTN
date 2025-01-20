@@ -32,14 +32,17 @@ fun HomeScreen(
     val context = LocalContext.current
     var showOptions by remember { mutableStateOf(false) }
 
-//    LaunchedEffect(authState.value) {
-//        when (authState.value) {
-//            is AuthState.Unauthenticated -> {
-//                navController.navigate("login")
-//            }
-//            else -> {}
-//        }
-//    }
+    LaunchedEffect(authState.value) {
+        when (authState.value) {
+            is AuthState.Unauthenticated -> {
+                navController.navigate("login") {
+                    popUpTo("home") { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+            else -> {}
+        }
+    }
 
     Scaffold(topBar = { TopAppBar(title = { Text("Home") }) }) {
         Surface(

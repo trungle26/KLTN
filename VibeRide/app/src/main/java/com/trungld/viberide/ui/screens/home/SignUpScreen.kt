@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -48,6 +49,24 @@ fun SignUpScreen(
     var confirmPassword by remember { mutableStateOf("") }
 
     val context = LocalContext.current
+    val authState = authViewModel.authState.observeAsState()
+
+    LaunchedEffect(authState.value) {
+        when (authState.value) {
+            is AuthState.Authenticated -> {
+                navController.navigate("home") {
+                    popUpTo("signup") { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+            is AuthState.Error -> {
+                val errorMessage = (authState.value as AuthState.Error).message
+                Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+            }
+            else -> {}
+
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -115,8 +134,13 @@ fun SignUpScreen(
                         Toast.makeText(context, "Password does not match", Toast.LENGTH_SHORT).show()
                     }
                 },
+                enabled = authState.value !is AuthState.Loading
             ) {
                 Text("Sign Up")
+            }
+
+            if (authState.value is AuthState.Loading) {
+                CircularProgressIndicator()
             }
         }
     }

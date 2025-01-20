@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.trungld.viberide.data.entities.User
 
 class AuthViewModel : ViewModel() {
 
@@ -59,20 +60,25 @@ class AuthViewModel : ViewModel() {
                 if (task.isSuccessful) {
                     val user = auth.currentUser
                     val userId = user?.uid
-                    val userData = hashMapOf(
-                        "id" to userId,
-                        "username" to username,
-                        "email" to email,
-                        "createdAt" to System.currentTimeMillis()
-                    )
-                    // Save user data to Firestore
-                    db.collection("users").document(userId!!)
-                        .set(userData)
-                        .addOnSuccessListener {
-                        }
-                        .addOnFailureListener { e ->
-                            Log.d("Firebase", e.message.toString())
-                        }
+
+                    if (userId != null) {
+                        val newUser = User(
+                            id = userId,
+                            username = username,
+                            email = email
+                        )
+
+                        db.collection("users").document(userId)
+                            .set(newUser)  // Firestore can convert the data class to JSON
+                            .addOnSuccessListener {
+                                _authState.value = AuthState.Authenticated
+                            }
+                            .addOnFailureListener { e ->
+                                _authState.value =
+                                    AuthState.Error("Error saving user: ${e.message}")
+                                Log.d("Firebase", e.message.toString())
+                            }
+                    }
                 } else {
                     _authState.value = AuthState.Error(task.exception?.message ?: "Unknown error")
                 }
@@ -80,7 +86,7 @@ class AuthViewModel : ViewModel() {
             }
     }
 
-    fun signOut(){
+    fun signOut() {
         auth.signOut()
         _authState.value = AuthState.Unauthenticated
     }

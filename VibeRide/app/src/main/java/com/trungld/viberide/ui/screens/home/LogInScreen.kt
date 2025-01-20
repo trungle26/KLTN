@@ -47,21 +47,24 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
 
     val authState = authViewModel.authState.observeAsState()
-//    val context = LocalContext.current
+    val context = LocalContext.current
 
-//    LaunchedEffect(authState.value) {
-//        when (authState.value) {
-//            is AuthState.Authenticated -> {
-//                navController.navigate("home")
-//            }
-//            is AuthState.Error -> {
-//                val errorMessage = (authState.value as AuthState.Error).message
-//                Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
-//            }
-//            else -> {}
-//
-//        }
-//    }
+    LaunchedEffect(authState.value) {
+        when (authState.value) {
+            is AuthState.Authenticated -> {
+                navController.navigate("home") {
+                    popUpTo("login") { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+            is AuthState.Error -> {
+                val errorMessage = (authState.value as AuthState.Error).message
+                Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+            }
+            else -> {}
+
+        }
+    }
 
     Scaffold(
         topBar = {
