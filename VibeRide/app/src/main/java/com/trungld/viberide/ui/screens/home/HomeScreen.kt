@@ -7,19 +7,22 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.trungld.viberide.ui.screens.shared.components.MediaControlCard
-import com.trungld.viberide.ui.screens.shared.components.MoodDetectionCard
+import com.trungld.viberide.ui.screens.shared.cards.MediaControlCard
+import com.trungld.viberide.ui.screens.shared.cards.MoodDetectionCard
 import com.trungld.viberide.ui.screens.shared.components.ProfilePicture
-import com.trungld.viberide.ui.screens.shared.components.RecommendationCard
+import com.trungld.viberide.ui.screens.shared.cards.RecommendationCard
 import com.trungld.viberide.ui.screens.shared.components.SearchBar
-import com.trungld.viberide.ui.screens.shared.components.YawnDetectionCard
+import com.trungld.viberide.ui.screens.shared.cards.YawnDetectionCard
 import com.trungld.viberide.ui.theme.VibeRideTheme
 import com.trungld.viberide.viewmodels.AuthState
 import com.trungld.viberide.viewmodels.AuthViewModel
+import com.trungld.viberide.viewmodels.HomeViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,6 +34,10 @@ fun HomeScreen(
     val authState = authViewModel.authState.observeAsState()
     val context = LocalContext.current
     var showOptions by remember { mutableStateOf(false) }
+    val homeViewModel: HomeViewModel = viewModel()
+    val mediaItems by homeViewModel.mediaItems.observeAsState(emptyList())
+
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
 
     LaunchedEffect(authState.value) {
         when (authState.value) {
@@ -123,7 +130,7 @@ fun HomeScreen(
                         .weight(1f),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    RecommendationCard(modifier = modifier.weight(1f))
+                    RecommendationCard(modifier = Modifier.width(screenWidth / 3), mediaItems = mediaItems)
                     Spacer(modifier = modifier.width(16.dp))
                     MediaControlCard(modifier = Modifier.weight(1f))
                     Spacer(modifier = modifier.width(16.dp))

@@ -1,5 +1,8 @@
 package com.trungld.viberide.viewmodels
 
+import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.firestore.FirebaseFirestore
 import com.trungld.viberide.data.entities.Media
@@ -7,31 +10,27 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 class HomeViewModel : ViewModel() {
+
     private val db = FirebaseFirestore.getInstance()
 
-    // StateFlow to hold the list of media items
-    private val _mediaList = MutableStateFlow<List<Media>>(emptyList())
-    val mediaList: StateFlow<List<Media>> = _mediaList
-
-    // StateFlow to hold any potential errors
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage
+    private val _mediaItems = MutableLiveData<List<Media>>()
+    val mediaItems: LiveData<List<Media>> = _mediaItems
 
     init {
         fetchMedia()
     }
 
     private fun fetchMedia() {
-        db.collection("media").get()
+        db.collection("media")
+            .get()
             .addOnSuccessListener { result ->
-                val mediaItems = result.documents.mapNotNull { document ->
+                val mediaList = result.documents.mapNotNull { document ->
                     document.toObject(Media::class.java)
                 }
-                _mediaList.value = mediaItems
+                _mediaItems.postValue(mediaList)
             }
-            .addOnFailureListener { exception ->
-                _errorMessage.value = exception.message
+            .addOnFailureListener { e ->
+                Log.e("Firebase", "Error fetching media: ${e.message}")
             }
-
     }
 }
