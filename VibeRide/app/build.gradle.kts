@@ -65,13 +65,24 @@ dependencies {
 
     val nav_version = "2.7.6"
     implementation("androidx.navigation:navigation-compose:$nav_version")
-    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
-    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
+
     implementation("androidx.compose.runtime:runtime-livedata:1.7.6")
 
-    implementation("androidx.media3:media3-exoplayer:1.5.1")
-    implementation("androidx.media3:media3-ui:1.5.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    // Media Player
+    val media3_version = "1.5.1"
+    implementation("androidx.media3:media3-datasource-okhttp:$media3_version")
+    implementation("androidx.media3:media3-exoplayer:$media3_version")
+    implementation("androidx.media3:media3-ui:$media3_version")
+    implementation("androidx.media3:media3-session:$media3_version")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$media3_version")
+
+    // Glide
+    implementation("com.github.bumptech.glide:glide:4.15.1")
+//    implementation("com.google.accompanist:accompanist-permission:0.30.0")
+
+    // Coil
+    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
 
     implementation("com.google.dagger:hilt-android:2.51.1")
     kapt("com.google.dagger:hilt-android-compiler:2.51.1")

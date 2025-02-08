@@ -9,4 +9,4 @@ data class Media(
     @PropertyName("thumbnail_url") val thumbnail_url: String = "",
     val title: String = "",
     val type: String = ""
-)
+) 
