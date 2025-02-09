@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class VibeRideAudioServiceHandler @Inject constructor(
-    private val exoPlayer: ExoPlayer,
+    val exoPlayer: ExoPlayer,
 ) : Player.Listener {
     private val _audioState: MutableStateFlow<AudioState> =
         MutableStateFlow(AudioState.Initial)

@@ -12,17 +12,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.trungld.viberide.ui.screens.shared.cards.MediaControlCard
-import com.trungld.viberide.ui.screens.shared.cards.MoodDetectionCard
+import com.trungld.viberide.ui.screens.home.cards.MediaControlCard
+import com.trungld.viberide.ui.screens.home.cards.MoodDetectionCard
+import com.trungld.viberide.ui.screens.home.cards.RecommendationCard
+import com.trungld.viberide.ui.screens.home.cards.YawnDetectionCard
 import com.trungld.viberide.ui.screens.shared.components.ProfilePicture
-import com.trungld.viberide.ui.screens.shared.cards.RecommendationCard
 import com.trungld.viberide.ui.screens.shared.components.SearchBar
-import com.trungld.viberide.ui.screens.shared.cards.YawnDetectionCard
 import com.trungld.viberide.ui.theme.VibeRideTheme
+import com.trungld.viberide.viewmodels.AudioViewModel
 import com.trungld.viberide.viewmodels.AuthState
 import com.trungld.viberide.viewmodels.AuthViewModel
-import com.trungld.viberide.viewmodels.HomeViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.trungld.viberide.viewmodels.UIEvents
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,13 +30,14 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
     authViewModel: AuthViewModel,
+    audioViewModel: AudioViewModel,
+    startService: () -> Unit
 ) {
     val authState = authViewModel.authState.observeAsState()
     val context = LocalContext.current
     var showOptions by remember { mutableStateOf(false) }
-    val homeViewModel: HomeViewModel = viewModel()
-    val mediaItems by homeViewModel.mediaItems.observeAsState(emptyList())
-
+    val exoPlayer = audioViewModel.audioServiceHandler.exoPlayer
+    val mediaItems by audioViewModel.mediaList.collectAsState()
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
 
     LaunchedEffect(authState.value) {
@@ -47,6 +48,7 @@ fun HomeScreen(
                     launchSingleTop = true
                 }
             }
+
             else -> {}
         }
     }
@@ -130,9 +132,21 @@ fun HomeScreen(
                         .weight(1f),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    RecommendationCard(modifier = Modifier.width(screenWidth / 3), mediaItems = mediaItems)
+                    RecommendationCard(
+                        modifier = Modifier.width(screenWidth / 3),
+                        mediaItems = mediaItems,
+                        onItemClick = {
+                            audioViewModel.onUiEvents(UIEvents.SelectedAudioChange(it))
+                            startService()
+                        }
+                    )
                     Spacer(modifier = modifier.width(16.dp))
-                    MediaControlCard(modifier = Modifier.weight(1f))
+                    MediaControlCard(
+                        modifier = Modifier
+                            .width(screenWidth / 3)
+                            .height(300.dp),
+                        exoPlayer
+                    )
                     Spacer(modifier = modifier.width(16.dp))
 
                     Column(modifier = modifier.weight(1f)) {
@@ -151,6 +165,12 @@ fun HomeScreen(
 @Composable
 private fun HomeScreenPreview() {
     VibeRideTheme {
-        HomeScreen(navController = TODO(), authViewModel = TODO())
+        HomeScreen(
+            navController = TODO(),
+            modifier = TODO(),
+            authViewModel = TODO(),
+            audioViewModel = TODO(),
+            startService = TODO(),
+        )
     }
 }

@@ -1,48 +1,19 @@
 package com.trungld.viberide.ui.screens.shared.components
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
-import com.trungld.viberide.viewmodels.AudioViewModel
-import androidx.compose.runtime.getValue
+import com.trungld.viberide.ui.theme.VibeRideTheme
 
 @Composable
-fun Media3PlayerView(videoUrl: String, audioViewModel: AudioViewModel = viewModel()) {
-
-    val context = LocalContext.current
-    val player by audioViewModel.playerState.collectAsState()
-
-    LaunchedEffect(videoUrl) {
-        audioViewModel.initializePlayer(context, videoUrl)
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            audioViewModel.savePlayerState()
-            audioViewModel.releasePlayer()
-        }
-    }
-
-    Column {
-        Media3AndroidView(player)
-        PlayerControls(player)
-    }
-
-}
-
-@Composable
-fun Media3AndroidView(player: ExoPlayer?) {
+fun Media3PlayerView(player: ExoPlayer) {
     AndroidView(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxSize(),
         factory = { context ->
             PlayerView(context).apply {
                 this.player = player

@@ -7,6 +7,9 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import com.trungld.viberide.player.notification.VibeRideAudioNotificationManager
 import com.trungld.viberide.player.service.VibeRideAudioServiceHandler
 import dagger.Module
@@ -62,6 +65,17 @@ object MediaModule {
     fun provideServiceHandler(exoPlayer: ExoPlayer): VibeRideAudioServiceHandler =
         VibeRideAudioServiceHandler(exoPlayer)
 
+    @Provides
+    @Singleton
+    fun provideFirebaseFirestore(): FirebaseFirestore = FirebaseFirestore.getInstance()
+
+    @Provides
+    @Singleton
+    fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
+
+    @Provides
+    @Singleton
+    fun provideFirebaseStorage(): FirebaseStorage = FirebaseStorage.getInstance()
 }
 
 

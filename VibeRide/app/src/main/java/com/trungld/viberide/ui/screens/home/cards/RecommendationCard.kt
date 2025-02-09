@@ -1,7 +1,6 @@
-package com.trungld.viberide.ui.screens.shared.cards
+package com.trungld.viberide.ui.screens.home.cards
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -9,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,13 +27,11 @@ import com.trungld.viberide.ui.screens.shared.components.MediaItem
 fun RecommendationCard(
     mediaItems: List<Media>,
     modifier: Modifier = Modifier,
+    onItemClick: (Int) -> Unit
 ) {
     Card(
         modifier = modifier
-            .fillMaxSize()
-            .clickable(enabled = true) {
-                // Handle click
-            },
+            .fillMaxSize(),
         shape = MaterialTheme.shapes.medium
     ) {
         Box(
@@ -57,12 +54,16 @@ fun RecommendationCard(
                     "Recommended for your mood",
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
-                    color = Color.White
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 LazyColumn {
-                    items(mediaItems) {
-                        MediaItem(modifier = Modifier.padding(8.dp), media = it)
+                    itemsIndexed(mediaItems) { index, media ->
+                        MediaItem(
+                            media = media,
+                            onItemClick = { onItemClick(index) }
+                        )
                     }
                 }
             }
@@ -73,5 +74,9 @@ fun RecommendationCard(
 @Preview
 @Composable
 private fun RecommendationCardPreview() {
-    RecommendationCard(mediaItems = emptyList())
+    RecommendationCard(
+        mediaItems = emptyList(),
+        modifier = TODO(),
+        onItemClick = TODO()
+    )
 }

@@ -31,13 +31,13 @@ import com.trungld.viberide.R
 
 @Composable
 fun MediaItem(
-    modifier: Modifier = Modifier,
-    media: Media
+    media: Media,
+    onItemClick: () -> Unit
 ) {
     Row(
-        modifier = modifier
+        modifier = Modifier
             .padding(5.dp)
-            .clickable(enabled = true, onClick = {}),
+            .clickable(enabled = true, onClick = onItemClick),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
@@ -79,6 +79,9 @@ fun MediaItem(
 @Composable
 private fun MediaItemPreview() {
     VibeRideTheme {
-        MediaItem(media = TODO())
+        MediaItem(
+            media = TODO(),
+            onItemClick = TODO()
+        )
     }
 }
