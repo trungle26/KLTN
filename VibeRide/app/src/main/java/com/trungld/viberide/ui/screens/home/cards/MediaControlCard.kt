@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -33,7 +34,8 @@ fun MediaControlCard(
                     )
                 )
         ) {
-            Media3PlayerView(exoPlayer)
+            if(exoPlayer.mediaItemCount > 0)Media3PlayerView(exoPlayer)
+            else Text("No media is playing")
         }
     }
 }

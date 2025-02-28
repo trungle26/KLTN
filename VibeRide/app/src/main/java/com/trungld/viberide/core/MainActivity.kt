@@ -13,12 +13,14 @@ import com.trungld.viberide.player.service.VibeRideAudioService
 import com.trungld.viberide.ui.theme.VibeRideTheme
 import com.trungld.viberide.viewmodels.AudioViewModel
 import com.trungld.viberide.viewmodels.AuthViewModel
+import com.trungld.viberide.viewmodels.FaceEmotionViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val audioViewModel: AudioViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
+    private val faceEmotionViewModel : FaceEmotionViewModel by viewModels()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,29 +29,41 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             VibeRideTheme {
-                MyAppNavigation(
+                AppNavigation(
                     modifier = Modifier,
                     authViewModel = authViewModel,
                     audioViewModel = audioViewModel,
-                    startService = ::startService
+                    faceEmotionViewModel = faceEmotionViewModel
                 )
 
             }
         }
+        val intent = Intent(this, VibeRideAudioService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+            Log.d("service", "startService: ")
+        } else {
+            startService(intent)
+        }
     }
 
-    private var isServiceRunning = false
-    private fun startService() {
-        if (!isServiceRunning) {
-            val intent = Intent(this, VibeRideAudioService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(intent)
-                Log.d("service", "startService: ")
-            } else {
-                startService(intent)
-            }
-            isServiceRunning = true
-        }
+//    private var isServiceRunning = false
+//    private fun startService() {
+//        if (!isServiceRunning) {
+//            val intent = Intent(this, VibeRideAudioService::class.java)
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//                startForegroundService(intent)
+//                Log.d("service", "startService: ")
+//            } else {
+//                startService(intent)
+//            }
+//            isServiceRunning = true
+//        }
+//    }
+
+    override fun onDestroy() {
+
+        super.onDestroy()
     }
 }
 

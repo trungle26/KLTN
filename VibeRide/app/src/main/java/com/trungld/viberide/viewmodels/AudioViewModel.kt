@@ -166,15 +166,25 @@ class AudioViewModel @Inject constructor(
             MediaItem.Builder()
                 .setUri(media.file_url)
                 .setMediaMetadata(
-                    MediaMetadata.Builder()
-                        .setAlbumArtist(media.artist)
-                        .setDisplayTitle(media.title)
-                        .setSubtitle(media.artist)
-                        .build()
+                    createMediaMetadata(media)
                 )
                 .build()
         }
         audioServiceHandler.setMediaItemList(mediaItemsList)
+    }
+
+    private fun createMediaMetadata(media: Media): MediaMetadata {
+        val metadata = MediaMetadata.Builder()
+            .setArtist(media.artist)
+            .setDisplayTitle(media.title)
+            .setGenre(media.genre)
+        if(media.type == "audio"){
+            metadata.setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+        }else{
+            metadata.setMediaType(MediaMetadata.MEDIA_TYPE_VIDEO)
+                .setArtworkUri(media.thumbnail_url.toUri())
+        }
+        return metadata.build()
     }
 
     private fun calculateProgressValue(currentProgress: Long) {

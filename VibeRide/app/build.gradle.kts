@@ -72,6 +72,7 @@ dependencies {
 
     // Media Player
     val media3_version = "1.5.1"
+    implementation ("androidx.media:media:1.7.0")
     implementation("androidx.media3:media3-datasource-okhttp:$media3_version")
     implementation("androidx.media3:media3-exoplayer:$media3_version")
     implementation("androidx.media3:media3-ui:$media3_version")
@@ -79,17 +80,32 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$media3_version")
 
     // Glide
-    implementation("com.github.bumptech.glide:glide:4.15.1")
-//    implementation("com.google.accompanist:accompanist-permission:0.30.0")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
 
     // Coil
     implementation("io.coil-kt.coil3:coil-compose:3.0.4")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
 
+    // Dagger hilt
     implementation("com.google.dagger:hilt-android:2.51.1")
     kapt("com.google.dagger:hilt-android-compiler:2.51.1")
 
-    implementation ("androidx.media:media:1.6.0")
+
+    // caching
+    implementation ("androidx.datastore:datastore-preferences:1.1.2")
+    implementation ("com.google.code.gson:gson:2.10.1") // For JSON serialization
+
+    // CameraX
+    implementation ("androidx.camera:camera-camera2:1.4.1")
+    implementation ("androidx.camera:camera-lifecycle:1.4.1")
+    implementation ("androidx.camera:camera-view:1.4.1")
+
+    // Accompanist
+    implementation ("com.google.accompanist:accompanist-navigation-animation:0.23.0")
+    implementation ("com.google.accompanist:accompanist-permissions:0.19.0")
+
+    // MLKit
+    implementation ("com.google.mlkit:face-mesh-detection:16.0.0-beta3")
 }
 
 // Allow references to generated code

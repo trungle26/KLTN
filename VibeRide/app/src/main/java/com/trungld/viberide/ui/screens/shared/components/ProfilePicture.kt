@@ -22,12 +22,12 @@ import com.trungld.viberide.ui.theme.VibeRideTheme
 
 @Composable
 fun ProfilePicture(
+    modifier: Modifier,
     imageUrl: String?,
     onClick: () -> Unit
 ) {
     Box(
-        modifier = Modifier
-            .size(100.dp)
+        modifier = modifier
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surface)
             .clickable { onClick() },
@@ -53,10 +53,3 @@ fun ProfilePicture(
     }
 }
 
-@Preview(showBackground = true, widthDp = 1280, heightDp = 720)
-@Composable
-private fun HomeScreenPreview() {
-    VibeRideTheme {
-        ProfilePicture(imageUrl = null) { }
-    }
-}

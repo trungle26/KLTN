@@ -5,23 +5,20 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.trungld.viberide.ui.screens.face_mesh_detection.FaceMeshDetectionView
 import com.trungld.viberide.ui.screens.home.cards.MediaControlCard
 import com.trungld.viberide.ui.screens.home.cards.MoodDetectionCard
 import com.trungld.viberide.ui.screens.home.cards.RecommendationCard
 import com.trungld.viberide.ui.screens.home.cards.YawnDetectionCard
-import com.trungld.viberide.ui.screens.shared.components.ProfilePicture
-import com.trungld.viberide.ui.screens.shared.components.SearchBar
-import com.trungld.viberide.ui.theme.VibeRideTheme
 import com.trungld.viberide.viewmodels.AudioViewModel
 import com.trungld.viberide.viewmodels.AuthState
 import com.trungld.viberide.viewmodels.AuthViewModel
+import com.trungld.viberide.viewmodels.FaceEmotionViewModel
 import com.trungld.viberide.viewmodels.UIEvents
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,14 +28,15 @@ fun HomeScreen(
     navController: NavController,
     authViewModel: AuthViewModel,
     audioViewModel: AudioViewModel,
-    startService: () -> Unit
+    faceEmotionViewModel: FaceEmotionViewModel
 ) {
     val authState = authViewModel.authState.observeAsState()
     val context = LocalContext.current
-    var showOptions by remember { mutableStateOf(false) }
+
     val exoPlayer = audioViewModel.audioServiceHandler.exoPlayer
     val mediaItems by audioViewModel.mediaList.collectAsState()
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
     LaunchedEffect(authState.value) {
         when (authState.value) {
@@ -53,7 +51,31 @@ fun HomeScreen(
         }
     }
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Home") }) }) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                modifier = modifier,
+                authState = authState.value,
+                signOut = {
+                    try {
+                        authViewModel.signOut()
+                    } catch (e: Exception) {
+                        Toast.makeText(
+                            context,
+                            "Error logging out: ${e.message}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                },
+                logIn = {
+                    navController.navigate("login")
+                },
+                signUp = {
+                    navController.navigate("signup")
+                }
+            )
+        }
+    ) {
         Surface(
             modifier = modifier
                 .fillMaxSize()
@@ -63,70 +85,7 @@ fun HomeScreen(
             Column(
                 modifier = modifier
                     .fillMaxSize()
-                    .padding(16.dp)
             ) {
-
-                // Top bar
-                Row(
-                    modifier = modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    ProfilePicture(
-                        imageUrl = null,
-                        onClick = { showOptions = !showOptions }
-                    )
-
-                    if (showOptions) {
-                        DropdownMenu(
-                            expanded = true,
-                            onDismissRequest = { showOptions = false }
-                        ) {
-                            if (authState.value == AuthState.Authenticated) {
-                                // User is logged in: Show Log Out button
-                                DropdownMenuItem(
-                                    text = { Text("Log Out") },
-                                    onClick = {
-                                        try {
-                                            authViewModel.signOut()
-                                        } catch (e: Exception) {
-                                            Toast.makeText(
-                                                context,
-                                                "Error logging out: ${e.message}",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    }
-                                )
-                            } else {
-                                // User is not logged in: Show Log In and Sign Up buttons
-                                DropdownMenuItem(
-                                    text = { Text("Log In") },
-                                    onClick = {
-                                        showOptions = false
-                                        navController.navigate("login")
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Sign Up") },
-                                    onClick = {
-                                        showOptions = false
-                                        navController.navigate("signup")
-                                    }
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = modifier.width(8.dp))
-                    SearchBar()
-
-                }
-
-                Spacer(modifier = modifier.height(16.dp))
-
-                // Main content
                 Row(
                     modifier = modifier
                         .weight(1f),
@@ -137,16 +96,24 @@ fun HomeScreen(
                         mediaItems = mediaItems,
                         onItemClick = {
                             audioViewModel.onUiEvents(UIEvents.SelectedAudioChange(it))
-                            startService()
                         }
                     )
                     Spacer(modifier = modifier.width(16.dp))
-                    MediaControlCard(
-                        modifier = Modifier
-                            .width(screenWidth / 3)
-                            .height(300.dp),
-                        exoPlayer
-                    )
+                    Column {
+                        MediaControlCard(
+                            modifier = Modifier
+                                .width(screenWidth / 3)
+                                .height(300.dp),
+                            exoPlayer
+                        )
+                        Spacer(modifier = modifier.height(16.dp))
+                        FaceMeshDetectionView(
+                            modifier = Modifier
+                                .width(screenWidth / 3)
+                                .height(300.dp),
+                            faceEmotionViewModel
+                        )
+                    }
                     Spacer(modifier = modifier.width(16.dp))
 
                     Column(modifier = modifier.weight(1f)) {
@@ -161,16 +128,3 @@ fun HomeScreen(
     }
 }
 
-@Preview(showBackground = true, widthDp = 1280, heightDp = 720)
-@Composable
-private fun HomeScreenPreview() {
-    VibeRideTheme {
-        HomeScreen(
-            navController = TODO(),
-            modifier = TODO(),
-            authViewModel = TODO(),
-            audioViewModel = TODO(),
-            startService = TODO(),
-        )
-    }
-}
