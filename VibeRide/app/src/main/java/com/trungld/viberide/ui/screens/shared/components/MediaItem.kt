@@ -25,7 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import com.trungld.viberide.data.entities.Media
+import com.trungld.viberide.data.entity.Media
 import com.trungld.viberide.ui.theme.VibeRideTheme
 import com.trungld.viberide.R
 

@@ -1,5 +1,6 @@
 package com.trungld.viberide.player.service
 
+import android.app.Service
 import android.content.Intent
 import android.os.Build
 import androidx.media3.common.Player
@@ -33,7 +34,6 @@ class VibeRideAudioService: MediaSessionService() {
         mediaSession
 
     override fun onDestroy() {
-        super.onDestroy()
         mediaSession.apply {
             release()
             if (player.playbackState != Player.STATE_IDLE) {
@@ -42,5 +42,7 @@ class VibeRideAudioService: MediaSessionService() {
                 player.stop()
             }
         }
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        super.onDestroy()
     }
 }

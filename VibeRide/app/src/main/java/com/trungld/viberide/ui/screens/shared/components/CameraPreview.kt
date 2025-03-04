@@ -1,6 +1,7 @@
 package com.trungld.viberide.ui.screens.shared.components
 
 import android.content.Context
+import android.view.View
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -19,7 +20,9 @@ import java.util.concurrent.Executors
 fun CameraPreview(
     context: Context,
     analyzer: ImageAnalysis.Analyzer,
-    lifecycleOwner: LifecycleOwner) {
+    lifecycleOwner: LifecycleOwner,
+    showPreview: Boolean = true // Default to true for backward compatibility
+) {
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     var preview by remember { mutableStateOf<Preview?>(null) }
     val executor = ContextCompat.getMainExecutor(context)
@@ -29,10 +32,12 @@ fun CameraPreview(
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { ctx ->
-            val previewView = PreviewView(ctx)
+            val previewView = PreviewView(ctx).apply {
+                // Hide the preview if showPreview is false
+                visibility = if (showPreview) View.VISIBLE else View.GONE
+            }
             cameraProviderFuture.addListener({
                 val imageAnalysis = ImageAnalysis.Builder()
-                    .setTargetAspectRatio(AspectRatio.RATIO_4_3)
                     .setTargetRotation(previewView.display.rotation)
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
@@ -40,19 +45,30 @@ fun CameraPreview(
                         setAnalyzer(cameraExecutor, analyzer)
                     }
                 val cameraSelector = CameraSelector.Builder()
-                    .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                    .requireLensFacing(CameraSelector.LENS_FACING_FRONT)
                     .build()
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    lifecycleOwner,
-                    cameraSelector,
-                    imageAnalysis,
-                    preview
-                )
+
+                if (showPreview) {
+                    // Bind both Preview and ImageAnalysis if showing preview
+                    preview = Preview.Builder().build().also {
+                        it.surfaceProvider = previewView.surfaceProvider
+                    }
+                    cameraProvider.bindToLifecycle(
+                        lifecycleOwner,
+                        cameraSelector,
+                        imageAnalysis,
+                        preview
+                    )
+                } else {
+                    // Only bind ImageAnalysis if no preview
+                    cameraProvider.bindToLifecycle(
+                        lifecycleOwner,
+                        cameraSelector,
+                        imageAnalysis
+                    )
+                }
             }, executor)
-            preview = Preview.Builder().build().also {
-                it.surfaceProvider = previewView.surfaceProvider
-            }
             previewView
         }
     )

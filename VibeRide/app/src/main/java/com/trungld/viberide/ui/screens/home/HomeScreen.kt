@@ -20,6 +20,7 @@ import com.trungld.viberide.viewmodels.AuthState
 import com.trungld.viberide.viewmodels.AuthViewModel
 import com.trungld.viberide.viewmodels.FaceEmotionViewModel
 import com.trungld.viberide.viewmodels.UIEvents
+import com.trungld.viberide.viewmodels.UIState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,6 +32,7 @@ fun HomeScreen(
     faceEmotionViewModel: FaceEmotionViewModel
 ) {
     val authState = authViewModel.authState.observeAsState()
+    val uiState = audioViewModel.uiState.collectAsState()
     val context = LocalContext.current
 
     val exoPlayer = audioViewModel.audioServiceHandler.exoPlayer
@@ -91,21 +93,28 @@ fun HomeScreen(
                         .weight(1f),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    RecommendationCard(
-                        modifier = Modifier.width(screenWidth / 3),
-                        mediaItems = mediaItems,
-                        onItemClick = {
-                            audioViewModel.onUiEvents(UIEvents.SelectedAudioChange(it))
-                        }
-                    )
+                    if (uiState.value is UIState.Initial) {
+                        CircularProgressIndicator(
+                            modifier = modifier.width(50.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    } else
+                        RecommendationCard(
+                            modifier = Modifier.width(screenWidth / 3),
+                            mediaItems = mediaItems,
+                            onItemClick = {
+                                audioViewModel.onUiEvents(UIEvents.SelectedAudioChange(it))
+                            }
+                        )
                     Spacer(modifier = modifier.width(16.dp))
                     Column {
-                        MediaControlCard(
-                            modifier = Modifier
-                                .width(screenWidth / 3)
-                                .height(300.dp),
-                            exoPlayer
-                        )
+                        if (uiState.value != UIState.Initial)
+                            MediaControlCard(
+                                modifier = Modifier
+                                    .width(screenWidth / 3)
+                                    .height(300.dp),
+                                exoPlayer
+                            )
                         Spacer(modifier = modifier.height(16.dp))
                         FaceMeshDetectionView(
                             modifier = Modifier

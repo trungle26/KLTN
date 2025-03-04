@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.trungld.viberide.data.entities.Media
+import com.trungld.viberide.data.entity.Media
 import com.trungld.viberide.ui.screens.shared.components.MediaItem
 
 @Composable

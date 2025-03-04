@@ -1,30 +1,37 @@
 package com.trungld.viberide.viewmodels
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.mlkit.vision.facemesh.FaceMesh
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 import kotlin.math.abs
 import kotlin.math.min
 
 @HiltViewModel
 class FaceEmotionViewModel @Inject constructor() : ViewModel() {
-    private val _currentEmotion = MutableLiveData<String>("Neutral")
-    val currentEmotion: LiveData<String> get() = _currentEmotion
+    val unrecognizedEmotion = EmotionResult(
+        Emotion.Unrecognized,
+        0f,
+        false,
+        0f,
+        emptyMap()
+    )
+    private val _currentEmotion = MutableStateFlow<EmotionResult>(unrecognizedEmotion)
+    val currentEmotion: StateFlow<EmotionResult> get() = _currentEmotion
 
-    private val emotionHistory = mutableListOf<String>()
+    private val emotionHistory = mutableListOf<EmotionResult>()
     private val historySize = 3 // Smooth over last 3 frames
 
     fun updateEmotionFromFaceMesh(faceMesh: FaceMesh?) {
         if (faceMesh == null) {
-            _currentEmotion.value = "No face detected"
+            _currentEmotion.value = unrecognizedEmotion
             emotionHistory.clear()
             return
         }
 
-        val emotion = suggestMusic(faceMesh)
+        val emotion = inferEmotionForMusicAndSleepiness(faceMesh)
         emotionHistory.add(emotion)
         if (emotionHistory.size > historySize) {
             emotionHistory.removeAt(0)
@@ -114,12 +121,13 @@ class FaceEmotionViewModel @Inject constructor() : ViewModel() {
 
         // Calm detection (unchanged)
         if (avgEyeOpenness > 0.035f && avgEyeOpenness < 0.08f &&
-            abs(smileCoef) < 0.015f && innerEyebrowDistance > 0.15f) {
+            abs(smileCoef) < 0.015f && innerEyebrowDistance > 0.15f
+        ) {
             calmScore += 0.4f
         }
 
         // Sleepy detection (tuned for "O" shape)
-        if (mouthHeight > 0.08f && mouthWidth > 0.25f && smileCoef < 0.005f) { // "O" shape: tall and wide, not a smile
+        if (mouthHeight > 0.08f && mouthWidth > 0.25f && smileCoef < 0.3f) {
             sleepyScore += mouthHeight * 12f // Boost for yawn height
             sleepyScore += (mouthWidth - 0.25f) * 8f // Add width contribution
         }
@@ -134,25 +142,15 @@ class FaceEmotionViewModel @Inject constructor() : ViewModel() {
         calmScore = min(0.7f, calmScore)
         sleepyScore = min(1.2f, sleepyScore)
 
-        // Debug info (unchanged)
-        val debugInfo = mapOf(
-            "smileCoef" to smileCoef,
-            "frownIntensity" to frownIntensity,
-            "innerEyebrowDistance" to innerEyebrowDistance,
-            "avgEyeOpenness" to avgEyeOpenness,
-            "mouthWidth" to mouthWidth,
-            "mouthHeight" to mouthHeight
-        )
-
-        // Determine dominant emotion (unchanged)
+        // Determine dominant emotion
         val musicEmotionScores = mapOf(
-            "Happy" to happyScore,
-            "Sad" to sadScore,
-            "Angry" to angryScore,
-            "Calm" to calmScore
+            Emotion.Happy to happyScore,
+            Emotion.Sad to sadScore,
+            Emotion.Angry to angryScore,
+            Emotion.Calm to calmScore
         )
 
-        val dominantEmotion = musicEmotionScores.maxByOrNull { it.value }?.key ?: "Calm"
+        val dominantEmotion = musicEmotionScores.maxByOrNull { it.value }?.key ?: Emotion.Calm
         val emotionIntensity = musicEmotionScores[dominantEmotion] ?: 0f
 
         return EmotionResult(
@@ -160,52 +158,24 @@ class FaceEmotionViewModel @Inject constructor() : ViewModel() {
             emotionIntensity = emotionIntensity,
             isSleepy = sleepyScore > 0.5f,
             sleepinessScore = sleepyScore,
-            allScores = musicEmotionScores + ("Sleepy" to sleepyScore),
-            debugInfo = debugInfo
+            allScores = musicEmotionScores,
         )
     }
 
-    fun suggestMusic(face: FaceMesh): String {
-        val emotionResult = inferEmotionForMusicAndSleepiness(face)
-        if (emotionResult.sleepinessScore > 0.7f) {
-            return "Suggesting: Gentle sleep music to help you rest"
-        }
-
-        val intensity = when {
-            emotionResult.emotionIntensity > 0.8f -> "intense"
-            emotionResult.emotionIntensity > 0.5f -> "moderate"
-            else -> "mild"
-        }
-
-        return when (emotionResult.dominantEmotion) {
-            "Happy" -> "Happy: $intensity upbeat, cheerful music"
-            "Sad" -> "Sad: $intensity melancholic, reflective music"
-            "Angry" -> "Angry: $intensity energetic, powerful music"
-            "Calm" -> "Calm: Gentle ambient, relaxing music"
-            else -> "Suggesting: Balanced, neutral music"
-        }
-    }
-
-    fun testSadDetection(face: FaceMesh): String {
-        val result = inferEmotionForMusicAndSleepiness(face)
-        return """
-            Sad Score: ${result.allScores["Sad"]}
-            Angry Score: ${result.allScores["Angry"]}
-            Happy Score: ${result.allScores["Happy"]}
-            Calm Score: ${result.allScores["Calm"]}
-            - Eyebrow Distance: ${result.debugInfo["innerEyebrowDistance"]}
-            - Eye Openness: ${result.debugInfo["avgEyeOpenness"]}
-            - Smile Coef: ${result.debugInfo["smileCoef"]}
-            - Mouth Width: ${result.debugInfo["mouthWidth"]}
-        """.trimIndent()
-    }
 }
 
 data class EmotionResult(
-    val dominantEmotion: String,
+    val dominantEmotion: Emotion,
     val emotionIntensity: Float,
     val isSleepy: Boolean,
     val sleepinessScore: Float,
-    val allScores: Map<String, Float>,
-    val debugInfo: Map<String, Float> = emptyMap()
+    val allScores: Map<Emotion, Float>,
 )
+
+sealed class Emotion {
+    object Happy : Emotion()
+    object Sad : Emotion()
+    object Angry : Emotion()
+    object Calm : Emotion()
+    object Unrecognized : Emotion()
+}

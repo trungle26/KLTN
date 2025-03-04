@@ -1,4 +1,4 @@
-package com.trungld.viberide.data.entities
+package com.trungld.viberide.data.entity
 
 data class User(
     val id: String? = null,

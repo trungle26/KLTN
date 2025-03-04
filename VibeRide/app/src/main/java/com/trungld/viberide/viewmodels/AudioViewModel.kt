@@ -13,32 +13,31 @@ import androidx.lifecycle.viewmodel.compose.saveable
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.exoplayer.ExoPlayer
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
-import com.trungld.viberide.data.entities.Media
+import com.trungld.viberide.data.entity.Media
+import com.trungld.viberide.data.repository.MediaRepository
 import com.trungld.viberide.player.service.AudioState
 import com.trungld.viberide.player.service.PlayerEvent
 import com.trungld.viberide.player.service.VibeRideAudioServiceHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-
-private val mediaDummy = Media("", "", "", "", "", "")
-
 
 @HiltViewModel
 class AudioViewModel @Inject constructor(
     val audioServiceHandler: VibeRideAudioServiceHandler,
-    private val db: FirebaseFirestore,
-    private val storage: FirebaseStorage,
+    private val mediaRepository: MediaRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    val mediaDummy = Media("", "", "", "", "", "", "")
 
     @OptIn(SavedStateHandleSaveableApi::class)
     var duration by savedStateHandle.saveable { mutableLongStateOf(0L) }
@@ -62,9 +61,7 @@ class AudioViewModel @Inject constructor(
     val uiState: StateFlow<UIState> = _uiState.asStateFlow()
 
     private val _playerState = MutableStateFlow<ExoPlayer?>(null)
-
     val playerState: StateFlow<ExoPlayer?> = _playerState
-    private var currentPosition: Long = 0L
 
     init {
         loadMediaData()
@@ -126,48 +123,38 @@ class AudioViewModel @Inject constructor(
     }
 
     private fun loadMediaData() {
-        db.collection("media")
-            .get()
-            .addOnSuccessListener { result ->
-                val mediaItems = result.documents.mapNotNull { document ->
-                    document.toObject(Media::class.java)
-                }
-                // Process each media item to replace gs:// with download URLs
-                viewModelScope.launch {
-                    val updatedMediaList = mediaItems.map { media ->
-                        try {
-                            // Convert file_url
-                            val fileRef = storage.getReferenceFromUrl(media.file_url)
-                            val fileUrl = fileRef.downloadUrl.await().toString()
+        // Collect Room data live
+        viewModelScope.launch {
+            mediaRepository.getLocalMedia().collect { localMedia ->
+                Log.d("AudioViewModel", "Collected ${localMedia.size} items from Room")
+                _mediaList.value = localMedia
+                setMediaItems(localMedia)
+            }
+        }
+        // Fetch from server in a separate coroutine
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                mediaRepository.fetchAndCacheMedia()
+                Log.d("AudioViewModel", "Server fetch completed")
+            } catch (e: Exception) {
+                Log.e("AudioViewModel", "Server fetch failed: ${e.message}", e)
+            }
+        }
+    }
 
-                            // Create a new Media object with updated URLs
-                            media.copy(
-                                file_url = fileUrl
-                            )
-                        } catch (e: Exception) {
-                            // Handle errors (e.g., log, use fallback)
-                            e.printStackTrace()
-                            media // Return original item if URL fetch fails
-                        }
-                    }
-                    // Update LiveData/media list with URLs
-                    _mediaList.value = updatedMediaList
-                    setMediaItems(updatedMediaList)
-                }
-            }
-            .addOnFailureListener { exception ->
-                // Handle Firestore fetch errors
-            }
+    fun suggestMediaByEmotion(emotion: String): List<Media> {
+        return _mediaList.value.filter { media ->
+            media.genre.contains(emotion, ignoreCase = true)
+        }.also {
+            Log.d("AudioViewModel", "Suggested ${it.size} items for emotion: $emotion")
+        }
     }
 
     private fun setMediaItems(mediaItems: List<Media>) {
         val mediaItemsList = mediaItems.map { media ->
-            Log.d("URI", "setMediaItems: uri is :${media.file_url}")
             MediaItem.Builder()
                 .setUri(media.file_url)
-                .setMediaMetadata(
-                    createMediaMetadata(media)
-                )
+                .setMediaMetadata(createMediaMetadata(media))
                 .build()
         }
         audioServiceHandler.setMediaItemList(mediaItemsList)
@@ -178,9 +165,9 @@ class AudioViewModel @Inject constructor(
             .setArtist(media.artist)
             .setDisplayTitle(media.title)
             .setGenre(media.genre)
-        if(media.type == "audio"){
+        if (media.type == "audio") {
             metadata.setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
-        }else{
+        } else {
             metadata.setMediaType(MediaMetadata.MEDIA_TYPE_VIDEO)
                 .setArtworkUri(media.thumbnail_url.toUri())
         }
@@ -202,7 +189,7 @@ class AudioViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        viewModelScope.launch{
+        viewModelScope.launch {
             audioServiceHandler.onPlayerEvents(PlayerEvent.Stop)
         }
         super.onCleared()

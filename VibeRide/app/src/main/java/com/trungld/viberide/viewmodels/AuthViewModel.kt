@@ -6,7 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.trungld.viberide.data.entities.User
+import com.trungld.viberide.data.entity.User
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 

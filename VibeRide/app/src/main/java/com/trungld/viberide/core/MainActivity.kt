@@ -47,22 +47,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-//    private var isServiceRunning = false
-//    private fun startService() {
-//        if (!isServiceRunning) {
-//            val intent = Intent(this, VibeRideAudioService::class.java)
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//                startForegroundService(intent)
-//                Log.d("service", "startService: ")
-//            } else {
-//                startService(intent)
-//            }
-//            isServiceRunning = true
-//        }
-//    }
 
     override fun onDestroy() {
-
+        stopService(Intent(this, VibeRideAudioService::class.java))
         super.onDestroy()
     }
 }

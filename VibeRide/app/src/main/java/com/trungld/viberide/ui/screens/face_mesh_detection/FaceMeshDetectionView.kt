@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -18,7 +17,9 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toComposeRect
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -29,6 +30,7 @@ import com.trungld.viberide.core.FaceMeshDetectionAnalyzer
 import com.trungld.viberide.ui.screens.shared.components.CameraPreview
 import com.trungld.viberide.ui.screens.shared.utils.mapFacePointToTarget
 import com.trungld.viberide.viewmodels.FaceEmotionViewModel
+import kotlin.math.abs
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -53,7 +55,7 @@ fun FaceMeshDetectionView(
             }
         },
         content = {
-            ScanSurface(modifier.fillMaxSize(),faceEmotionViewModel)
+            ScanSurface(modifier.fillMaxSize(), faceEmotionViewModel)
         }
     )
 }
@@ -61,16 +63,13 @@ fun FaceMeshDetectionView(
 @Composable
 fun ScanSurface(
     modifier: Modifier = Modifier,
-    viewModel: FaceEmotionViewModel) {
+    viewModel: FaceEmotionViewModel
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var faceMeshes: MutableList<FaceMesh> = remember { mutableStateListOf<FaceMesh>() }
 
-//    val screenWidth = remember { mutableStateOf(context.resources.displayMetrics.widthPixels) }
-//    val screenHeight = remember { mutableStateOf(context.resources.displayMetrics.heightPixels) }
-
-    val imageWidth = remember { mutableStateOf(0) }
-    val imageHeight = remember { mutableStateOf(0) }
+    var size by remember { mutableStateOf(IntSize.Zero) }
 
     val analyzer = FaceMeshDetectionAnalyzer { meshes, _, _ ->
         faceMeshes.clear()         // Clear the current contents
@@ -82,21 +81,24 @@ fun ScanSurface(
         modifier = modifier
             .fillMaxSize()
             .clipToBounds()
+            .onSizeChanged { size = it }
     ) {
         CameraPreview(
             context = context,
             lifecycleOwner = lifecycleOwner,
-            analyzer = analyzer
+            analyzer = analyzer,
+            showPreview = false,
         )
 
         DrawFaces(
             faceMeshes = faceMeshes,
+            targetHeight = size.height.toFloat(),
         )
 
         // Display the current emotion
-        val emotion by viewModel.currentEmotion.observeAsState("Neutral")
+        val emotion by viewModel.currentEmotion.collectAsState()
         Text(
-            text = "Emotion: $emotion",
+            text = "Emotion: ${emotion.dominantEmotion}, Intensity: ${emotion.emotionIntensity}",
             color = Color.White,
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -108,46 +110,38 @@ fun ScanSurface(
 
 @Composable
 fun DrawFaces(
-    faceMeshes: List<FaceMesh>
+    faceMeshes: List<FaceMesh>,
+    targetHeight: Float,
 ) {
     Canvas(modifier = Modifier.fillMaxSize()) {
-        // Define a fixed target rectangle (300 x 300) centered in the canvas.
-        val targetWidth = 500f
-        val targetHeight = 500f
+        // Calculate the target width with 1.618:1 aspect ratio (golden ratio)
+        val targetWidth = (targetHeight / 1.618f)
         val targetLeft = (size.width - targetWidth) / 2f
         val targetTop = (size.height - targetHeight) / 2f
-        val targetRect =
-            Rect(targetLeft, targetTop, targetLeft + targetWidth, targetTop + targetHeight)
-
-        // (Optional) Draw a border for the static target area.
-        drawRect(
-            color = Color.Yellow,
-            topLeft = Offset(targetRect.left, targetRect.top),
-            size = Size(targetRect.width, targetRect.height),
-            style = Stroke(width = 3f)
-        )
+        val targetRect = Rect(targetLeft, targetTop, targetLeft + targetWidth, targetTop + targetHeight)
 
         faceMeshes.forEach { face ->
-            // Get the face bounding box in image coordinates.
+            // Get the face bounding box in image coordinates
             val faceBox = face.boundingBox.toComposeRect()
-            // Draw each landmark using the utility function.
+
+            // Draw each landmark with flipped x-coordinate
             face.allPoints.forEach { landmark ->
-                val mappedPoint = mapFacePointToTarget(faceBox, landmark.position, targetRect)
+                val originalPoint = mapFacePointToTarget(faceBox, landmark.position, targetRect)
+                val flippedX = size.width - originalPoint.x // Flip around canvas center
+                val mappedPoint = Offset(flippedX, originalPoint.y)
                 drawCircle(
                     color = Color.Cyan,
-                    radius = 3f,
+                    radius = 1f,
                     center = mappedPoint
                 )
             }
 
-            // Draw triangles.
+            // Draw triangles with flipped x-coordinates
             face.allTriangles.forEach { triangle ->
                 val points = triangle.allPoints.map {
-                    mapFacePointToTarget(
-                        faceBox,
-                        it.position,
-                        targetRect
-                    )
+                    val originalPoint = mapFacePointToTarget(faceBox, it.position, targetRect)
+                    val flippedX = size.width - originalPoint.x // Flip around canvas center
+                    Offset(flippedX, originalPoint.y)
                 }
                 if (points.size >= 3) {
                     val path = Path().apply {
@@ -156,31 +150,9 @@ fun DrawFaces(
                         lineTo(points[2].x, points[2].y)
                         close()
                     }
-                    drawPath(path, color = Color.Cyan, style = Stroke(width = 1f))
+                    drawPath(path, color = Color.Cyan, style = Stroke(width = 0.5f))
                 }
             }
-
-            // Emotion inference: Happiness example
-            val leftMouth = mapFacePointToTarget(faceBox, face.allPoints[61].position, targetRect)
-            val rightMouth = mapFacePointToTarget(faceBox, face.allPoints[291].position, targetRect)
-            val mouthWidth = Math.abs(leftMouth.x - rightMouth.x)
-
-            val leftCheek = mapFacePointToTarget(faceBox, face.allPoints[234].position, targetRect)
-            val rightCheek = mapFacePointToTarget(faceBox, face.allPoints[454].position, targetRect)
-            val faceWidth = Math.abs(leftCheek.x - rightCheek.x)
-            val normalizedMouthWidth = mouthWidth / faceWidth
-
-            val emotion = if (normalizedMouthWidth > 0.5) "Happy" else "Neutral"
-            // Draw the emotion text on the canvas
-            drawContext.canvas.nativeCanvas.drawText(
-                emotion,
-                targetRect.left,
-                targetRect.top - 20f,
-                android.graphics.Paint().apply {
-                    color = android.graphics.Color.WHITE
-                    textSize = 40f
-                }
-            )
         }
     }
 }

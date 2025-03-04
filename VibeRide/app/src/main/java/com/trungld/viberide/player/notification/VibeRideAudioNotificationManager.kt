@@ -3,7 +3,9 @@ package com.trungld.viberide.player.notification
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
@@ -16,6 +18,7 @@ import androidx.media3.ui.PlayerNotificationManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import com.trungld.viberide.R
+import com.trungld.viberide.core.MainActivity
 
 private const val NOTIFICATION_ID = 101
 private const val NOTIFICATION_CHANNEL_NAME = "notification channel 1"
@@ -54,6 +57,19 @@ class VibeRideAudioNotificationManager @Inject constructor(
 
     @UnstableApi
     private fun buildNotification(mediaSession: MediaSession) {
+        // Intent to resume MainActivity
+        val intent = Intent(context, MainActivity::class.java).apply {
+            action = Intent.ACTION_MAIN
+            addCategory(Intent.CATEGORY_LAUNCHER)
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         PlayerNotificationManager.Builder(
             context,
             NOTIFICATION_ID,
@@ -62,7 +78,7 @@ class VibeRideAudioNotificationManager @Inject constructor(
             .setMediaDescriptionAdapter(
                 VibeRideAudioNotificationAdapter(
                     context = context,
-                    pendingIntent = mediaSession.sessionActivity
+                    pendingIntent = pendingIntent
                 )
             )
             .setSmallIconResourceId(R.drawable.ic_launcher_foreground)
