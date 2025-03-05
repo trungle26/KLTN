@@ -26,13 +26,23 @@ class VibeRideAudioServiceHandler @Inject constructor(
         exoPlayer.addListener(this)
     }
 
-    fun addMediaItem(mediaItem: MediaItem) {
-        exoPlayer.setMediaItem(mediaItem)
+    fun addMediaItem(mediaItem: List<MediaItem>) {
+        exoPlayer.addMediaItems(mediaItem)
         exoPlayer.prepare()
     }
 
     fun setMediaItemList(mediaItems: List<MediaItem>) {
-        exoPlayer.setMediaItems(mediaItems)
+        val currentIndex = exoPlayer.currentMediaItemIndex
+        val totalItems = exoPlayer.mediaItemCount
+
+        if (totalItems > 0) {
+
+            // Update the queue without interrupting playback
+            exoPlayer.replaceMediaItems(currentIndex+1, totalItems-1,mediaItems)
+        } else {
+            // If queue is empty, just set the new items
+            exoPlayer.setMediaItems(mediaItems)
+        }
         exoPlayer.prepare()
     }
 
@@ -82,7 +92,6 @@ class VibeRideAudioServiceHandler @Inject constructor(
 
     override fun onIsPlayingChanged(isPlaying: Boolean) {
         _audioState.value = AudioState.Playing(isPlaying = isPlaying)
-        _audioState.value = AudioState.CurrentPlaying(exoPlayer.currentMediaItemIndex)
         if (isPlaying) {
             GlobalScope.launch(Dispatchers.Main) {
                 startProgressUpdate()

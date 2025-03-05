@@ -22,7 +22,7 @@ class FaceEmotionViewModel @Inject constructor() : ViewModel() {
     val currentEmotion: StateFlow<EmotionResult> get() = _currentEmotion
 
     private val emotionHistory = mutableListOf<EmotionResult>()
-    private val historySize = 3 // Smooth over last 3 frames
+    private val historySize = 5 // Smooth over last 5 frames
 
     fun updateEmotionFromFaceMesh(faceMesh: FaceMesh?) {
         if (faceMesh == null) {

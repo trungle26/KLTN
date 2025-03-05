@@ -18,6 +18,7 @@ import com.trungld.viberide.ui.screens.home.cards.YawnDetectionCard
 import com.trungld.viberide.viewmodels.AudioViewModel
 import com.trungld.viberide.viewmodels.AuthState
 import com.trungld.viberide.viewmodels.AuthViewModel
+import com.trungld.viberide.viewmodels.Emotion
 import com.trungld.viberide.viewmodels.FaceEmotionViewModel
 import com.trungld.viberide.viewmodels.UIEvents
 import com.trungld.viberide.viewmodels.UIState
@@ -36,9 +37,18 @@ fun HomeScreen(
     val context = LocalContext.current
 
     val exoPlayer = audioViewModel.audioServiceHandler.exoPlayer
-    val mediaItems by audioViewModel.mediaList.collectAsState()
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+
+    val recommendedMediaItems by audioViewModel.recommendedMediaList.collectAsState()
+    val emotion by faceEmotionViewModel.currentEmotion.collectAsState()
+    val emotionString = when (emotion.dominantEmotion) {
+        is Emotion.Happy -> "Happy"
+        is Emotion.Sad -> "Sad"
+        is Emotion.Angry -> "Angry"
+        is Emotion.Calm -> "Calm"
+        is Emotion.Unrecognized -> "Unrecognized"
+    }
 
     LaunchedEffect(authState.value) {
         when (authState.value) {
@@ -50,6 +60,12 @@ fun HomeScreen(
             }
 
             else -> {}
+        }
+    }
+
+    LaunchedEffect(emotionString) {
+        if (emotionString != "Unrecognized") {
+            audioViewModel.suggestMediaByEmotion(emotionString)
         }
     }
 
@@ -101,7 +117,7 @@ fun HomeScreen(
                     } else
                         RecommendationCard(
                             modifier = Modifier.width(screenWidth / 3),
-                            mediaItems = mediaItems,
+                            mediaItems = recommendedMediaItems,
                             onItemClick = {
                                 audioViewModel.onUiEvents(UIEvents.SelectedAudioChange(it))
                             }

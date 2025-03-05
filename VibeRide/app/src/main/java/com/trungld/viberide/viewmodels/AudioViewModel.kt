@@ -24,9 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -54,8 +52,8 @@ class AudioViewModel @Inject constructor(
     @OptIn(SavedStateHandleSaveableApi::class)
     var currentSelectedAudio by savedStateHandle.saveable { mutableStateOf(mediaDummy) }
 
-    private val _mediaList = MutableStateFlow<List<Media>>(emptyList()) // Backing state
-    val mediaList: StateFlow<List<Media>> = _mediaList // Public read-only state
+    private val _recommendedMediaList = MutableStateFlow<List<Media>>(emptyList()) // Backing state
+    val recommendedMediaList: StateFlow<List<Media>> = _recommendedMediaList // Public read-only state
 
     private val _uiState = MutableStateFlow<UIState>(UIState.Initial)
     val uiState: StateFlow<UIState> = _uiState.asStateFlow()
@@ -76,7 +74,7 @@ class AudioViewModel @Inject constructor(
                     is AudioState.Playing -> isPlaying = mediaState.isPlaying
                     is AudioState.Progress -> calculateProgressValue(mediaState.progress)
                     is AudioState.CurrentPlaying -> {
-                        currentSelectedAudio = _mediaList.value[mediaState.mediaItemIndex]
+                        currentSelectedAudio = _recommendedMediaList.value[mediaState.mediaItemIndex]
                     }
 
                     is AudioState.Ready -> {
@@ -123,14 +121,6 @@ class AudioViewModel @Inject constructor(
     }
 
     private fun loadMediaData() {
-        // Collect Room data live
-        viewModelScope.launch {
-            mediaRepository.getLocalMedia().collect { localMedia ->
-                Log.d("AudioViewModel", "Collected ${localMedia.size} items from Room")
-                _mediaList.value = localMedia
-                setMediaItems(localMedia)
-            }
-        }
         // Fetch from server in a separate coroutine
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -142,12 +132,20 @@ class AudioViewModel @Inject constructor(
         }
     }
 
-    fun suggestMediaByEmotion(emotion: String): List<Media> {
-        return _mediaList.value.filter { media ->
-            media.genre.contains(emotion, ignoreCase = true)
-        }.also {
-            Log.d("AudioViewModel", "Suggested ${it.size} items for emotion: $emotion")
+    fun suggestMediaByEmotion(emotion: String){
+        // Collect Room data live
+        viewModelScope.launch {
+            mediaRepository.getLocalMedia().collect { localMedia ->
+                Log.d("AudioViewModel", "Collected ${localMedia.size} items from Room")
+                _recommendedMediaList.value = localMedia.filter { media ->
+                    media.genre.contains(emotion, ignoreCase = true)
+                }.also {
+                    Log.d("AudioViewModel", "Suggested ${it.size} items for emotion: $emotion")
+                    setMediaItems(it)
+                }
+            }
         }
+        _recommendedMediaList.value
     }
 
     private fun setMediaItems(mediaItems: List<Media>) {
