@@ -12,7 +12,6 @@ import androidx.lifecycle.viewmodel.compose.SavedStateHandleSaveableApi
 import androidx.lifecycle.viewmodel.compose.saveable
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
-import androidx.media3.exoplayer.ExoPlayer
 import com.trungld.viberide.data.entity.Media
 import com.trungld.viberide.data.repository.MediaRepository
 import com.trungld.viberide.player.service.AudioState
@@ -53,13 +52,19 @@ class AudioViewModel @Inject constructor(
     var currentSelectedAudio by savedStateHandle.saveable { mutableStateOf(mediaDummy) }
 
     private val _recommendedMediaList = MutableStateFlow<List<Media>>(emptyList()) // Backing state
-    val recommendedMediaList: StateFlow<List<Media>> = _recommendedMediaList // Public read-only state
+    val recommendedMediaList: StateFlow<List<Media>> =
+        _recommendedMediaList // Public read-only state
+
+    // queue state
+    private val _queueMediaList = MutableStateFlow<List<Media>>(emptyList())
+    val queueMediaList: StateFlow<List<Media>> = _queueMediaList
+
+    private val _currentMediaIndex = MutableStateFlow<Int>(-1)
+    val currentMediaIndex: StateFlow<Int> = _currentMediaIndex
 
     private val _uiState = MutableStateFlow<UIState>(UIState.Initial)
     val uiState: StateFlow<UIState> = _uiState.asStateFlow()
 
-    private val _playerState = MutableStateFlow<ExoPlayer?>(null)
-    val playerState: StateFlow<ExoPlayer?> = _playerState
 
     init {
         loadMediaData()
@@ -70,11 +75,17 @@ class AudioViewModel @Inject constructor(
             audioServiceHandler.audioState.collectLatest { mediaState ->
                 when (mediaState) {
                     AudioState.Initial -> _uiState.value = UIState.Initial
-                    is AudioState.Buffering -> calculateProgressValue(mediaState.progress)
+                    is AudioState.Buffering -> {
+                        calculateProgressValue(mediaState.progress)
+                        _uiState.value = UIState.Buffering
+                    }
+
                     is AudioState.Playing -> isPlaying = mediaState.isPlaying
                     is AudioState.Progress -> calculateProgressValue(mediaState.progress)
                     is AudioState.CurrentPlaying -> {
-                        currentSelectedAudio = _recommendedMediaList.value[mediaState.mediaItemIndex]
+                        currentSelectedAudio =
+                            _recommendedMediaList.value[mediaState.mediaItemIndex]
+
                     }
 
                     is AudioState.Ready -> {
@@ -104,6 +115,7 @@ class AudioViewModel @Inject constructor(
             }
 
             is UIEvents.SelectedAudioChange -> {
+                _currentMediaIndex.value = uiEvents.index
                 audioServiceHandler.onPlayerEvents(
                     PlayerEvent.SelectedAudioChange,
                     selectedAudioIndex = uiEvents.index
@@ -132,30 +144,32 @@ class AudioViewModel @Inject constructor(
         }
     }
 
-    fun suggestMediaByEmotion(emotion: String){
+    fun suggestMediaByEmotion(emotion: String) {
         // Collect Room data live
         viewModelScope.launch {
             mediaRepository.getLocalMedia().collect { localMedia ->
                 Log.d("AudioViewModel", "Collected ${localMedia.size} items from Room")
-                _recommendedMediaList.value = localMedia.filter { media ->
-                    media.genre.contains(emotion, ignoreCase = true)
-                }.also {
-                    Log.d("AudioViewModel", "Suggested ${it.size} items for emotion: $emotion")
-                    setMediaItems(it)
-                }
+                if (emotion == "Unrecognized") _recommendedMediaList.value = localMedia
+                else
+                    _recommendedMediaList.value = localMedia.filter { media ->
+                        media.genre.contains(emotion, ignoreCase = true)
+                    }.also {
+                        Log.d("AudioViewModel", "Suggested ${it.size} items for emotion: $emotion")
+                    }
             }
         }
         _recommendedMediaList.value
     }
 
-    private fun setMediaItems(mediaItems: List<Media>) {
-        val mediaItemsList = mediaItems.map { media ->
+    fun updateMediaItems() {
+        val mediaItemsList = _recommendedMediaList.value.map { media ->
             MediaItem.Builder()
                 .setUri(media.file_url)
                 .setMediaMetadata(createMediaMetadata(media))
                 .build()
         }
         audioServiceHandler.setMediaItemList(mediaItemsList)
+        _queueMediaList.value = _recommendedMediaList.value
     }
 
     private fun createMediaMetadata(media: Media): MediaMetadata {
@@ -207,5 +221,6 @@ sealed class UIEvents {
 
 sealed class UIState {
     object Initial : UIState()
+    object Buffering : UIState()
     object Ready : UIState()
 }

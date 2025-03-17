@@ -1,5 +1,6 @@
 package com.trungld.viberide.ui.screens.shared.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.trungld.viberide.data.entity.Media
@@ -33,12 +35,14 @@ import com.trungld.viberide.R
 @Composable
 fun MediaItem(
     media: Media,
-    onItemClick: () -> Unit
+    onItemClick: () -> Unit,
+    color: Color = Color.Black
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(5.dp)
+            .background(color)
             .clickable(enabled = true, onClick = onItemClick),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -49,8 +53,8 @@ fun MediaItem(
             contentDescription = "Media Thumbnail",
             contentScale = ContentScale.Crop,
             modifier = Modifier
-                .size(56.dp)
-                .clip(RoundedCornerShape(8.dp)),
+                .size(70.dp)
+                .clip(RoundedCornerShape(5.dp)),
             placeholder = painterResource(id = R.drawable.ic_launcher_background), // Add a placeholder
             error = painterResource(id = R.drawable.ic_launcher_foreground) // Add an error image
         )
@@ -61,15 +65,16 @@ fun MediaItem(
             Text(
                 text = media.title,
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Bold,
                     color = Color.White
                 ),
+                fontSize = 20.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = media.artist,
                 style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
+                fontSize = 16.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

@@ -1,58 +1,26 @@
 package com.trungld.viberide.ui.theme
 
-import android.app.Activity
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
-)
 
 @Composable
-fun VibeRideTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
-    content: @Composable () -> Unit
-) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
-
+fun VibeRideTheme(content: @Composable () -> Unit) {
+    val darkColors = darkColorScheme(
+        primary = Color(0xFFBB86FC),        // A vibrant purple
+        secondary = Color(0xFF03DAC6),      // A teal accent
+        background = Color(0xFF121212),     // Dark gray background (YouTube Music style)
+        surface = Color(0xFF121212),        // Matches background for consistency
+        onPrimary = Color.Black,            // Text/icon color on primary
+        onSecondary = Color.Black,          // Text/icon color on secondary
+        onBackground = Color.White,         // Text/icon color on background
+        onSurface = Color.White             // Text/icon color on surface
+    )
     MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
+        colorScheme = darkColors,
+        typography = Typography,            // Default or custom typography
         content = content
     )
 }

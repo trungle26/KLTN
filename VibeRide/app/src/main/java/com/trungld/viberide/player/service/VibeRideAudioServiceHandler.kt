@@ -32,17 +32,7 @@ class VibeRideAudioServiceHandler @Inject constructor(
     }
 
     fun setMediaItemList(mediaItems: List<MediaItem>) {
-        val currentIndex = exoPlayer.currentMediaItemIndex
-        val totalItems = exoPlayer.mediaItemCount
-
-        if (totalItems > 0) {
-
-            // Update the queue without interrupting playback
-            exoPlayer.replaceMediaItems(currentIndex+1, totalItems-1,mediaItems)
-        } else {
-            // If queue is empty, just set the new items
-            exoPlayer.setMediaItems(mediaItems)
-        }
+        exoPlayer.setMediaItems(mediaItems)
         exoPlayer.prepare()
     }
 

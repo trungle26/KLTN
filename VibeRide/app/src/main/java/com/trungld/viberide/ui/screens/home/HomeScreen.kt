@@ -1,27 +1,30 @@
 package com.trungld.viberide.ui.screens.home
 
 import android.widget.Toast
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.trungld.viberide.ui.screens.face_mesh_detection.FaceMeshDetectionView
-import com.trungld.viberide.ui.screens.home.cards.MediaControlCard
-import com.trungld.viberide.ui.screens.home.cards.MoodDetectionCard
-import com.trungld.viberide.ui.screens.home.cards.RecommendationCard
-import com.trungld.viberide.ui.screens.home.cards.YawnDetectionCard
+import com.trungld.viberide.ui.screens.shared.components.FaceMeshDetectionView
+import com.trungld.viberide.ui.screens.shared.components.cards.MediaControlCard
+import com.trungld.viberide.ui.screens.shared.components.cards.MediaListCard
+import com.trungld.viberide.ui.screens.shared.components.cards.MoodDetectionCard
+import com.trungld.viberide.ui.screens.shared.components.cards.YawnDetectionCard
 import com.trungld.viberide.viewmodels.AudioViewModel
 import com.trungld.viberide.viewmodels.AuthState
 import com.trungld.viberide.viewmodels.AuthViewModel
 import com.trungld.viberide.viewmodels.Emotion
 import com.trungld.viberide.viewmodels.FaceEmotionViewModel
 import com.trungld.viberide.viewmodels.UIEvents
-import com.trungld.viberide.viewmodels.UIState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,12 +36,7 @@ fun HomeScreen(
     faceEmotionViewModel: FaceEmotionViewModel
 ) {
     val authState = authViewModel.authState.observeAsState()
-    val uiState = audioViewModel.uiState.collectAsState()
     val context = LocalContext.current
-
-    val exoPlayer = audioViewModel.audioServiceHandler.exoPlayer
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
     val recommendedMediaItems by audioViewModel.recommendedMediaList.collectAsState()
     val emotion by faceEmotionViewModel.currentEmotion.collectAsState()
@@ -49,6 +47,25 @@ fun HomeScreen(
         is Emotion.Calm -> "Calm"
         is Emotion.Unrecognized -> "Unrecognized"
     }
+
+    // Map emotions to gradient colors
+    val (startColor, endColor) = when (emotionString) {
+        "Happy" -> Color(0xFFFFD700) to Color(0xFFFFA500) // Gold to Orange
+        "Sad" -> Color(0xFF1E90FF) to Color(0xFF00BFFF)   // DodgerBlue to DeepSkyBlue
+        "Angry" -> Color(0xFFFF4500) to Color(0xFFDC143C) // OrangeRed to Crimson
+        "Calm" -> Color(0xFF7FFFD4) to Color(0xFF00FA9A)  // Aquamarine to MediumSpringGreen
+        else -> Color(0xFF808080) to Color(0xFFA9A9A9)    // Gray to DarkGray
+    }
+
+    // Animate the colors
+    val animatedStartColor by animateColorAsState(
+        targetValue = startColor,
+        animationSpec = tween(durationMillis = 500), label = "" // 500ms transition
+    )
+    val animatedEndColor by animateColorAsState(
+        targetValue = endColor,
+        animationSpec = tween(durationMillis = 500), label = ""
+    )
 
     LaunchedEffect(authState.value) {
         when (authState.value) {
@@ -64,15 +81,19 @@ fun HomeScreen(
     }
 
     LaunchedEffect(emotionString) {
-        if (emotionString != "Unrecognized") {
-            audioViewModel.suggestMediaByEmotion(emotionString)
-        }
+        audioViewModel.suggestMediaByEmotion(emotionString)
     }
 
+
     Scaffold(
+        modifier = Modifier
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(animatedStartColor, animatedEndColor)
+                )
+            ),
         topBar = {
             TopAppBar(
-                modifier = modifier,
                 authState = authState.value,
                 signOut = {
                     try {
@@ -95,59 +116,68 @@ fun HomeScreen(
         }
     ) {
         Surface(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
+                .background(Color.Transparent)
                 .padding(it)
         ) {
-
-            Column(
-                modifier = modifier
-                    .fillMaxSize()
+            Row(
+                modifier = Modifier
+                    .fillMaxSize(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(
-                    modifier = modifier
+                MediaListCard(
+                    modifier = Modifier
                         .weight(1f),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    if (uiState.value is UIState.Initial) {
-                        CircularProgressIndicator(
-                            modifier = modifier.width(50.dp),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    } else
-                        RecommendationCard(
-                            modifier = Modifier.width(screenWidth / 3),
-                            mediaItems = recommendedMediaItems,
-                            onItemClick = {
-                                audioViewModel.onUiEvents(UIEvents.SelectedAudioChange(it))
-                            }
-                        )
-                    Spacer(modifier = modifier.width(16.dp))
-                    Column {
-                        if (uiState.value != UIState.Initial)
-                            MediaControlCard(
-                                modifier = Modifier
-                                    .width(screenWidth / 3)
-                                    .height(300.dp),
-                                exoPlayer
-                            )
-                        Spacer(modifier = modifier.height(16.dp))
-                        FaceMeshDetectionView(
-                            modifier = Modifier
-                                .width(screenWidth / 3)
-                                .height(300.dp),
-                            faceEmotionViewModel
-                        )
-                    }
-                    Spacer(modifier = modifier.width(16.dp))
+                    mediaItems = recommendedMediaItems,
+                    onItemClick = { index ->
+                        audioViewModel.apply {
+                            updateMediaItems()
+                            onUiEvents(UIEvents.SelectedAudioChange(index))
+                        }
+                    },
+                    title = "Recommended for your mood"
+                )
+                Spacer(modifier = Modifier.width(16.dp))
 
-                    Column(modifier = modifier.weight(1f)) {
-                        YawnDetectionCard()
-                        Spacer(modifier = modifier.height(16.dp))
-                        MoodDetectionCard()
-                    }
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    YawnDetectionCard(
+                        modifier = Modifier.weight(2f),
+                        emotion = emotion
+                    )
+                    MediaControlCard(
+                        modifier = Modifier
+                            .weight(3f),
+                        exoPlayer = audioViewModel.audioServiceHandler.exoPlayer,
+                        isPlaying = audioViewModel.isPlaying,
+                        onReplayClick = { audioViewModel.onUiEvents(UIEvents.Backward) },
+                        onPauseClick = { audioViewModel.onUiEvents(UIEvents.PlayPause) },
+                        onForwardClick = { audioViewModel.onUiEvents(UIEvents.Forward) },
+                        progress = audioViewModel.progress,
+                        onSeek = { audioViewModel.onUiEvents(UIEvents.SeekTo(it)) },
+                        onFullScreenClick = {
+                            navController.navigate("now_playing")
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    FaceMeshDetectionView(
+                        modifier = Modifier
+                            .weight(1f),
+                        faceEmotionViewModel
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    MoodDetectionCard(
+                        modifier = Modifier.weight(1f), emotion = emotion
+                    )
                 }
             }
+
         }
 
     }

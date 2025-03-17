@@ -15,7 +15,7 @@ class FaceMeshDetectionAnalyzer(
     private val meshDetector = FaceMeshDetection.getClient()
 
     // Throttle settings: process one frame every 200ms (~5 FPS)
-    private val desiredIntervalMillis = 200L
+    private val desiredIntervalMillis = 400L
     private var lastAnalyzedTimestamp = 0L
 
     override fun analyze(imageProxy: ImageProxy) {

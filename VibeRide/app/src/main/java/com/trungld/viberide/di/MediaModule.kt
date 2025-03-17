@@ -48,7 +48,9 @@ object MediaModule {
     fun provideMediaSession(
         @ApplicationContext context: Context,
         player: ExoPlayer,
-    ): MediaSession = MediaSession.Builder(context, player).build()
+    ): MediaSession = MediaSession.Builder(context, player).build().apply {
+        player.playWhenReady = true
+    }
 
     @Provides
     @Singleton

@@ -119,6 +119,10 @@ dependencies {
     // optional - Kotlin Extensions and Coroutines support for Room
     implementation("androidx.room:room-ktx:$room_version")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
+
+    // Icon
+    implementation ("androidx.compose.material:material-icons-extended:$2025.01.00")
+
 }
 
 // Allow references to generated code

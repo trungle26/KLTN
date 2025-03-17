@@ -1,21 +1,19 @@
-package com.trungld.viberide.ui.screens.face_mesh_detection
+package com.trungld.viberide.ui.screens.shared.components
 
+import android.Manifest
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toComposeRect
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -27,10 +25,8 @@ import com.google.accompanist.permissions.PermissionRequired
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.mlkit.vision.facemesh.FaceMesh
 import com.trungld.viberide.core.FaceMeshDetectionAnalyzer
-import com.trungld.viberide.ui.screens.shared.components.CameraPreview
 import com.trungld.viberide.ui.screens.shared.utils.mapFacePointToTarget
 import com.trungld.viberide.viewmodels.FaceEmotionViewModel
-import kotlin.math.abs
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -40,7 +36,7 @@ fun FaceMeshDetectionView(
 ) {
     val context = LocalContext.current
     val cameraPermissionState =
-        rememberPermissionState(permission = android.Manifest.permission.CAMERA)
+        rememberPermissionState(permission = Manifest.permission.CAMERA)
 
     PermissionRequired(
         permissionState = cameraPermissionState,

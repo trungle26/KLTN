@@ -30,7 +30,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             VibeRideTheme {
                 AppNavigation(
-                    modifier = Modifier,
                     authViewModel = authViewModel,
                     audioViewModel = audioViewModel,
                     faceEmotionViewModel = faceEmotionViewModel
