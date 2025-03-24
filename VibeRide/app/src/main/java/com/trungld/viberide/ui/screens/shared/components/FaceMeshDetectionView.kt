@@ -25,7 +25,7 @@ import com.google.accompanist.permissions.PermissionRequired
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.mlkit.vision.facemesh.FaceMesh
 import com.trungld.viberide.core.FaceMeshDetectionAnalyzer
-import com.trungld.viberide.ui.screens.shared.utils.mapFacePointToTarget
+import com.trungld.viberide.ui.screens.shared.utils.PositionUtils.mapFacePointToTarget
 import com.trungld.viberide.viewmodels.FaceEmotionViewModel
 
 @OptIn(ExperimentalPermissionsApi::class)

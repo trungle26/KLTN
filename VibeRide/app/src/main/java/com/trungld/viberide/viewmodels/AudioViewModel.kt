@@ -34,7 +34,7 @@ class AudioViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    val mediaDummy = Media("", "", "", "", "", "", "")
+    val mediaDummy = Media()
 
     @OptIn(SavedStateHandleSaveableApi::class)
     var duration by savedStateHandle.saveable { mutableLongStateOf(0L) }
@@ -55,6 +55,10 @@ class AudioViewModel @Inject constructor(
     val recommendedMediaList: StateFlow<List<Media>> =
         _recommendedMediaList // Public read-only state
 
+    // State for search results
+    private val _searchResultsState = MutableStateFlow<FetchingState>(FetchingState.Initial)
+    val searchResultsState: StateFlow<FetchingState> = _searchResultsState
+
     // queue state
     private val _queueMediaList = MutableStateFlow<List<Media>>(emptyList())
     val queueMediaList: StateFlow<List<Media>> = _queueMediaList
@@ -65,10 +69,9 @@ class AudioViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<UIState>(UIState.Initial)
     val uiState: StateFlow<UIState> = _uiState.asStateFlow()
 
+    private val _fetchingState = MutableStateFlow<FetchingState>(FetchingState.Initial)
+    val fetchingState: StateFlow<FetchingState> = _fetchingState.asStateFlow()
 
-    init {
-        loadMediaData()
-    }
 
     init {
         viewModelScope.launch {
@@ -132,33 +135,35 @@ class AudioViewModel @Inject constructor(
         }
     }
 
-    private fun loadMediaData() {
-        // Fetch from server in a separate coroutine
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                mediaRepository.fetchAndCacheMedia()
-                Log.d("AudioViewModel", "Server fetch completed")
-            } catch (e: Exception) {
-                Log.e("AudioViewModel", "Server fetch failed: ${e.message}", e)
-            }
-        }
-    }
-
     fun suggestMediaByEmotion(emotion: String) {
-        // Collect Room data live
         viewModelScope.launch {
-            mediaRepository.getLocalMedia().collect { localMedia ->
-                Log.d("AudioViewModel", "Collected ${localMedia.size} items from Room")
-                if (emotion == "Unrecognized") _recommendedMediaList.value = localMedia
-                else
-                    _recommendedMediaList.value = localMedia.filter { media ->
-                        media.genre.contains(emotion, ignoreCase = true)
-                    }.also {
-                        Log.d("AudioViewModel", "Suggested ${it.size} items for emotion: $emotion")
-                    }
+            _fetchingState.value = FetchingState.Loading
+            try {
+                val recommended = mediaRepository.getRecommendationsByEmotion(emotion)
+                _fetchingState.value = FetchingState.Success(recommended)
+                _recommendedMediaList.value = recommended
+                mediaRepository.cacheMedia(recommended)
+                updateMediaItems()
+            } catch (e: Exception) {
+                _fetchingState.value = FetchingState.Error(e.message ?: "Failed to load recommendations for $emotion")
             }
         }
         _recommendedMediaList.value
+    }
+
+    // Search media by name
+    fun searchMedia(query: String) {
+        viewModelScope.launch {
+            _searchResultsState.value = FetchingState.Loading
+            try {
+                val results = mediaRepository.searchMediaFromFirestore(query)
+                _searchResultsState.value = FetchingState.Success(results)
+                Log.d("Search Media", "searchMedia: found ${results.size} results for query $query")
+                mediaRepository.cacheMedia(results)
+            } catch (e: Exception) {
+                _searchResultsState.value = FetchingState.Error(e.message ?: "Failed to search media")
+            }
+        }
     }
 
     fun updateMediaItems() {
@@ -176,7 +181,7 @@ class AudioViewModel @Inject constructor(
         val metadata = MediaMetadata.Builder()
             .setArtist(media.artist)
             .setDisplayTitle(media.title)
-            .setGenre(media.genre)
+            .setGenre(media.genre.toString())
         if (media.type == "audio") {
             metadata.setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
         } else {
@@ -223,4 +228,12 @@ sealed class UIState {
     object Initial : UIState()
     object Buffering : UIState()
     object Ready : UIState()
+}
+
+sealed class FetchingState{
+    object Initial : FetchingState()
+    object Loading : FetchingState()
+    data class Success(val mediaList: List<Media>) : FetchingState()
+    data class Error(val message: String) : FetchingState()
+
 }

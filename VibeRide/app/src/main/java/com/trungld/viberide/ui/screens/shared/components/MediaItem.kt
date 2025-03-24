@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,27 +19,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import com.trungld.viberide.data.entity.Media
-import com.trungld.viberide.ui.theme.VibeRideTheme
 import com.trungld.viberide.R
+import com.trungld.viberide.ui.theme.VibeRideTheme
 
 
 @Composable
 fun MediaItem(
-    media: Media,
+    modifier: Modifier = Modifier,
+    thumbnailUrl: String,
+    title: String,
+    artist: String,
     onItemClick: () -> Unit,
     color: Color = Color.Black
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .padding(5.dp)
             .background(color)
             .clickable(enabled = true, onClick = onItemClick),
@@ -48,7 +47,7 @@ fun MediaItem(
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
-                .data(media.thumbnail_url)
+                .data(thumbnailUrl)
                 .build(),
             contentDescription = "Media Thumbnail",
             contentScale = ContentScale.Crop,
@@ -63,16 +62,16 @@ fun MediaItem(
 
         Column {
             Text(
-                text = media.title,
+                text = title,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = Color.White
                 ),
-                fontSize = 20.sp,
+                fontSize = 14.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = media.artist,
+                text = artist,
                 style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
                 fontSize = 16.sp,
                 maxLines = 1,
@@ -87,7 +86,11 @@ fun MediaItem(
 private fun MediaItemPreview() {
     VibeRideTheme {
         MediaItem(
-            media = TODO(),
+            modifier = Modifier
+                .size(500.dp),
+            thumbnailUrl = "https://example.com/thumbnail.jpg",
+            title = "Example Title",
+            artist = "Example Artist",
             onItemClick = TODO()
         )
     }

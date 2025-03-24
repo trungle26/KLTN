@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.trungld.viberide.ui.screens.shared.components.FaceMeshDetectionView
+import com.trungld.viberide.ui.screens.shared.components.LoadingIndicator
 import com.trungld.viberide.ui.screens.shared.components.cards.MediaControlCard
 import com.trungld.viberide.ui.screens.shared.components.cards.MediaListCard
 import com.trungld.viberide.ui.screens.shared.components.cards.MoodDetectionCard
@@ -24,6 +25,7 @@ import com.trungld.viberide.viewmodels.AuthState
 import com.trungld.viberide.viewmodels.AuthViewModel
 import com.trungld.viberide.viewmodels.Emotion
 import com.trungld.viberide.viewmodels.FaceEmotionViewModel
+import com.trungld.viberide.viewmodels.FetchingState
 import com.trungld.viberide.viewmodels.UIEvents
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,6 +38,7 @@ fun HomeScreen(
     faceEmotionViewModel: FaceEmotionViewModel
 ) {
     val authState = authViewModel.authState.observeAsState()
+    val fetchingState by audioViewModel.fetchingState.collectAsState()
     val context = LocalContext.current
 
     val recommendedMediaItems by audioViewModel.recommendedMediaList.collectAsState()
@@ -49,12 +52,12 @@ fun HomeScreen(
     }
 
     // Map emotions to gradient colors
-    val (startColor, endColor) = when (emotionString) {
-        "Happy" -> Color(0xFFFFD700) to Color(0xFFFFA500) // Gold to Orange
-        "Sad" -> Color(0xFF1E90FF) to Color(0xFF00BFFF)   // DodgerBlue to DeepSkyBlue
-        "Angry" -> Color(0xFFFF4500) to Color(0xFFDC143C) // OrangeRed to Crimson
-        "Calm" -> Color(0xFF7FFFD4) to Color(0xFF00FA9A)  // Aquamarine to MediumSpringGreen
-        else -> Color(0xFF808080) to Color(0xFFA9A9A9)    // Gray to DarkGray
+    val (startColor, endColor) = when (emotion.dominantEmotion) {
+        is Emotion.Happy -> Color(0xFFFFD700) to Color(0xFFFFA500) // Gold to Orange
+        is Emotion.Sad -> Color(0xFF1E90FF) to Color(0xFF00BFFF)   // DodgerBlue to DeepSkyBlue
+        is Emotion.Angry -> Color(0xFFFF4500) to Color(0xFFDC143C) // OrangeRed to Crimson
+        is Emotion.Calm -> Color(0xFF7FFFD4) to Color(0xFF00FA9A)  // Aquamarine to MediumSpringGreen
+        is Emotion.Unrecognized -> Color(0xFFFFD700) to Color(0xFFA9A9A9)    // Gray to DarkGray
     }
 
     // Animate the colors
@@ -80,10 +83,11 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(emotionString) {
-        audioViewModel.suggestMediaByEmotion(emotionString)
+    if (recommendedMediaItems.isEmpty()) {
+        LaunchedEffect(emotionString) {
+            audioViewModel.suggestMediaByEmotion(emotionString)
+        }
     }
-
 
     Scaffold(
         modifier = Modifier
@@ -111,6 +115,9 @@ fun HomeScreen(
                 },
                 signUp = {
                     navController.navigate("signup")
+                },
+                onSearch = { query ->
+                    navController.navigate("search_results/$query")
                 }
             )
         }
@@ -126,18 +133,22 @@ fun HomeScreen(
                     .fillMaxSize(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                MediaListCard(
-                    modifier = Modifier
-                        .weight(1f),
-                    mediaItems = recommendedMediaItems,
-                    onItemClick = { index ->
-                        audioViewModel.apply {
-                            updateMediaItems()
-                            onUiEvents(UIEvents.SelectedAudioChange(index))
-                        }
-                    },
-                    title = "Recommended for your mood"
-                )
+                if (fetchingState is FetchingState.Loading) {
+                    LoadingIndicator(modifier = Modifier.weight(1f))
+                } else
+                    MediaListCard(
+                        modifier = Modifier
+                            .weight(1f),
+                        mediaItems = recommendedMediaItems,
+                        maxItems = 3,
+                        onItemClick = { index ->
+                            audioViewModel.apply {
+                                updateMediaItems()
+                                onUiEvents(UIEvents.SelectedAudioChange(index))
+                            }
+                        },
+                        title = "Recommended for your mood"
+                    )
                 Spacer(modifier = Modifier.width(16.dp))
 
                 Column(
@@ -173,7 +184,9 @@ fun HomeScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     MoodDetectionCard(
-                        modifier = Modifier.weight(1f), emotion = emotion
+                        modifier = Modifier.weight(1f), emotion = emotion,
+                        onPlayPlaylist = { audioViewModel.suggestMediaByEmotion(emotionString) },
+                        isFetching = fetchingState is FetchingState.Loading
                     )
                 }
             }

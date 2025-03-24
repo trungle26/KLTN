@@ -120,8 +120,9 @@ dependencies {
     implementation("androidx.room:room-ktx:$room_version")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
 
-    // Icon
+    // Icon, Material3
     implementation ("androidx.compose.material:material-icons-extended:$2025.01.00")
+    implementation("androidx.compose.material3:material3:1.4.0-alpha10")
 
 }
 

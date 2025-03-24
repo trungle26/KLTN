@@ -70,10 +70,11 @@ fun NowPlayingScreen(
         }
     ) { paddingValues ->
         Surface(
-            modifier = modifier.padding(paddingValues),
+            modifier = Modifier.fillMaxSize().padding(paddingValues),
         ) {
             Box(
                 modifier = Modifier
+                    .fillMaxSize()
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(

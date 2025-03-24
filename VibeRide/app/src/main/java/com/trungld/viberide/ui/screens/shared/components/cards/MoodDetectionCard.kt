@@ -32,6 +32,7 @@ import com.trungld.viberide.viewmodels.EmotionResult
 fun MoodDetectionCard(
     modifier: Modifier = Modifier,
     emotion: EmotionResult,
+    isFetching: Boolean = false,
     onPlayPlaylist: (String) -> Unit = {} // Callback for playlist action
 ) {
     // Map emotion to an icon (emojis for now, swap for icons later)
@@ -120,7 +121,7 @@ fun MoodDetectionCard(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Play Button (skip for Unrecognized)
-                if (emotion.dominantEmotion !is Emotion.Unrecognized) {
+                if (emotion.dominantEmotion !is Emotion.Unrecognized && !isFetching) {
                     Button(
                         onClick = { onPlayPlaylist(moodString) },
                         colors = ButtonDefaults.buttonColors(

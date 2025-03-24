@@ -29,7 +29,8 @@ fun TopAppBar(
     authState: AuthState?,
     signOut: () -> Unit,
     logIn: () -> Unit,
-    signUp: () -> Unit
+    signUp: () -> Unit,
+    onSearch: (String) -> Unit,// just added
 ) {
     var showOptions by remember { mutableStateOf(false) }
     // Top bar
@@ -40,6 +41,10 @@ fun TopAppBar(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
+
+        SearchBar(modifier = Modifier.weight(1f),
+            onSearch = onSearch)
+        Spacer(modifier = modifier.width(8.dp))
         ProfilePicture(
             modifier = modifier.size(70.dp),
             imageUrl = null,
@@ -77,9 +82,6 @@ fun TopAppBar(
             }
         }
 
-        Spacer(modifier = modifier.width(8.dp))
-        SearchBar()
-
     }
 }
 
@@ -90,7 +92,8 @@ private fun TopAppBarPreview() {
         authState = AuthState.Authenticated,
         signOut = {},
         logIn = {},
-        signUp = {}
+        signUp = {},
+        onSearch = {}
     )
     
 }

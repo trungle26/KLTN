@@ -6,7 +6,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -22,6 +25,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,15 +34,17 @@ import com.trungld.viberide.R
 import com.trungld.viberide.ui.theme.VibeRideTheme
 
 @Composable
-fun SearchBar() {
+fun SearchBar(
+    modifier: Modifier = Modifier,
+    onSearch: (String) -> Unit
+) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .height(61.dp)
             .padding(2.dp)
             .shadow(4.dp, RoundedCornerShape(20.dp)) // Apply shadow with rounded corners
             .background(
-                color = if (isSystemInDarkTheme()) Color.Black else Color.White,
+                color = Color.DarkGray,
             )
     ) {
         var searchText by remember { mutableStateOf("") }
@@ -52,14 +58,16 @@ fun SearchBar() {
                 .padding(horizontal = 16.dp),
             textStyle = TextStyle(fontSize = 19.sp),
             leadingIcon = {
-                IconButton(onClick = { /*TODO*/ }) {
+                IconButton(onClick = {
+                    if (searchText.isNotEmpty()) onSearch(searchText)
+                }) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_search), // Replace with your search icon
                         contentDescription = "Search",
                     )
                 }
             },
-            placeholder = { Text(text = "Search", color = Color.Gray) },
+            placeholder = { Text(text = "Search", color = Color.LightGray) },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent, // Set the container color to transparent
                 unfocusedContainerColor = Color.Transparent,
@@ -67,6 +75,12 @@ fun SearchBar() {
                 focusedIndicatorColor = Color.Transparent, // Remove the focused indicator
                 unfocusedIndicatorColor = Color.Transparent, // Remove the unfocused indicator
                 disabledIndicatorColor = Color.Transparent, // Remove the disabled indicator
+            ),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search), // Set enter key to "Search"
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    if (searchText.isNotEmpty()) onSearch(searchText) // Trigger search on enter
+                }
             )
         )
     }
@@ -76,6 +90,6 @@ fun SearchBar() {
 @Composable
 private fun SearchBarPreview() {
     VibeRideTheme() {
-        SearchBar()
+        SearchBar(Modifier.width(300.dp),{})
     }
 }

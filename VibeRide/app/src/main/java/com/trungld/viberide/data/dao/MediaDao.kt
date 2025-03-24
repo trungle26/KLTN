@@ -13,7 +13,7 @@ interface MediaDao {
     fun getAllMedia(): Flow<List<Media>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertMedia(media: List<Media>)
+    suspend fun insertAll(media: List<Media>)
 
     @Query("DELETE FROM media")
     suspend fun deleteAllMedia()
