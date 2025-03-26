@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.trungld.viberide.core.CameraManager
 import com.trungld.viberide.ui.screens.shared.components.FaceMeshDetectionView
 import com.trungld.viberide.ui.screens.shared.components.LoadingIndicator
 import com.trungld.viberide.ui.screens.shared.components.cards.MediaControlCard
@@ -35,7 +36,8 @@ fun HomeScreen(
     navController: NavController,
     authViewModel: AuthViewModel,
     audioViewModel: AudioViewModel,
-    faceEmotionViewModel: FaceEmotionViewModel
+    faceEmotionViewModel: FaceEmotionViewModel,
+    cameraManager: CameraManager
 ) {
     val authState = authViewModel.authState.observeAsState()
     val fetchingState by audioViewModel.fetchingState.collectAsState()
@@ -43,6 +45,9 @@ fun HomeScreen(
 
     val recommendedMediaItems by audioViewModel.recommendedMediaList.collectAsState()
     val emotion by faceEmotionViewModel.currentEmotion.collectAsState()
+    val faceMeshes by faceEmotionViewModel.faceMeshes.collectAsState()
+    val yawnCount by faceEmotionViewModel.yawnCount.collectAsState()
+
     val emotionString = when (emotion.dominantEmotion) {
         is Emotion.Happy -> "Happy"
         is Emotion.Sad -> "Sad"
@@ -156,8 +161,11 @@ fun HomeScreen(
                 ) {
                     YawnDetectionCard(
                         modifier = Modifier.weight(2f),
-                        emotion = emotion
-                    )
+                        emotion = emotion,
+                        yawnCount = yawnCount
+                    ){
+                        faceEmotionViewModel.onYawnDetected()
+                    }
                     MediaControlCard(
                         modifier = Modifier
                             .weight(3f),
@@ -180,7 +188,8 @@ fun HomeScreen(
                     FaceMeshDetectionView(
                         modifier = Modifier
                             .weight(1f),
-                        faceEmotionViewModel
+                        faceMeshes,
+                        emotion
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     MoodDetectionCard(

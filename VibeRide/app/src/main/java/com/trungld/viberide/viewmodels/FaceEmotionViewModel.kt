@@ -21,6 +21,12 @@ class FaceEmotionViewModel @Inject constructor() : ViewModel() {
     private val _currentEmotion = MutableStateFlow<EmotionResult>(unrecognizedEmotion)
     val currentEmotion: StateFlow<EmotionResult> get() = _currentEmotion
 
+    private val _faceMeshes = MutableStateFlow<List<FaceMesh>>(emptyList())
+    val faceMeshes: StateFlow<List<FaceMesh>> = _faceMeshes
+
+    private val _yawnCount = MutableStateFlow<Int>(0)
+    val yawnCount: StateFlow<Int> = _yawnCount
+
     private val emotionHistory = mutableListOf<EmotionResult>()
     private val historySize = 5 // Smooth over last 5 frames
 
@@ -41,6 +47,14 @@ class FaceEmotionViewModel @Inject constructor() : ViewModel() {
             .eachCount()
             .maxByOrNull { it.value }?.key ?: emotion
         _currentEmotion.value = mostCommonEmotion
+    }
+
+    fun updateFaceMeshes(meshes: List<FaceMesh>) {
+        _faceMeshes.value = meshes
+    }
+
+    fun onYawnDetected() {
+        _yawnCount.value++
     }
 
     private fun inferEmotionForMusicAndSleepiness(face: FaceMesh): EmotionResult {

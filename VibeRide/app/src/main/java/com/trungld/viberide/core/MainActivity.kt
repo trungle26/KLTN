@@ -18,6 +18,8 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private lateinit var cameraManager: CameraManager
+
     private val audioViewModel: AudioViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
     private val faceEmotionViewModel : FaceEmotionViewModel by viewModels()
@@ -26,13 +28,21 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        cameraManager = CameraManager(this)
+        // Initialize camera with activity lifecycle
+        val analyzer = FaceMeshDetectionAnalyzer { meshes, _, _ ->
+            faceEmotionViewModel.updateFaceMeshes(meshes)
+            faceEmotionViewModel.updateEmotionFromFaceMesh(if (meshes.isNotEmpty()) meshes.first() else null)
+        }
+        cameraManager.startCamera(this, analyzer)
 
         setContent {
             VibeRideTheme {
                 AppNavigation(
                     authViewModel = authViewModel,
                     audioViewModel = audioViewModel,
-                    faceEmotionViewModel = faceEmotionViewModel
+                    faceEmotionViewModel = faceEmotionViewModel,
+                    cameraManager = cameraManager,
                 )
 
             }
@@ -49,6 +59,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         stopService(Intent(this, VibeRideAudioService::class.java))
+        cameraManager.stopCamera()
         super.onDestroy()
     }
 }

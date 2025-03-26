@@ -24,7 +24,8 @@ fun AppNavigation(
     modifier: Modifier = Modifier,
     authViewModel: AuthViewModel,
     audioViewModel: AudioViewModel,
-    faceEmotionViewModel: FaceEmotionViewModel
+    faceEmotionViewModel: FaceEmotionViewModel,
+    cameraManager: CameraManager
 ) {
     val navController = rememberAnimatedNavController()
 
@@ -58,7 +59,7 @@ fun AppNavigation(
             popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }) },
             popExitTransition = { slideOutHorizontally(targetOffsetX = { it }) }
         ) {
-            HomeScreen(modifier, navController, authViewModel, audioViewModel, faceEmotionViewModel)
+            HomeScreen(modifier, navController, authViewModel, audioViewModel, faceEmotionViewModel, cameraManager)
         }
         composable(
             route = "now_playing",

@@ -28,10 +28,10 @@ import com.trungld.viberide.viewmodels.EmotionResult
 @Composable
 fun YawnDetectionCard(
     modifier: Modifier = Modifier,
-    emotion: EmotionResult
+    emotion: EmotionResult,
+    yawnCount: Int,
+    onYawnDetected: () -> Unit
 ) {
-    // State for yawn count (for demo; replace with real tracking if available)
-    var yawnCount = remember { mutableIntStateOf(0) }
 
     // Determine sleepiness alert
     val isSleepy = emotion.isSleepy || emotion.sleepinessScore > 0.5f // Threshold adjustable
@@ -40,7 +40,7 @@ fun YawnDetectionCard(
     // Update yawn count if sleepy (simulated; replace with real logic)
     LaunchedEffect(emotion.isSleepy) {
         if (emotion.isSleepy) {
-            yawnCount.value += 1
+            onYawnDetected.invoke()
         }
     }
 

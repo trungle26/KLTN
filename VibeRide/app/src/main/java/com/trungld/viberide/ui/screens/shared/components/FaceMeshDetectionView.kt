@@ -19,24 +19,24 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionRequired
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.mlkit.vision.facemesh.FaceMesh
-import com.trungld.viberide.core.FaceMeshDetectionAnalyzer
 import com.trungld.viberide.ui.screens.shared.utils.PositionUtils.mapFacePointToTarget
-import com.trungld.viberide.viewmodels.FaceEmotionViewModel
+import com.trungld.viberide.viewmodels.EmotionResult
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun FaceMeshDetectionView(
     modifier: Modifier = Modifier,
-    faceEmotionViewModel: FaceEmotionViewModel
+    faceMeshes: List<FaceMesh>,
+    emotion: EmotionResult,
 ) {
     val context = LocalContext.current
     val cameraPermissionState =
         rememberPermissionState(permission = Manifest.permission.CAMERA)
+
 
     PermissionRequired(
         permissionState = cameraPermissionState,
@@ -51,7 +51,7 @@ fun FaceMeshDetectionView(
             }
         },
         content = {
-            ScanSurface(modifier.fillMaxSize(), faceEmotionViewModel)
+            ScanSurface(modifier.fillMaxSize(), faceMeshes,emotion)
         }
     )
 }
@@ -59,19 +59,10 @@ fun FaceMeshDetectionView(
 @Composable
 fun ScanSurface(
     modifier: Modifier = Modifier,
-    viewModel: FaceEmotionViewModel
+    faceMeshes: List<FaceMesh>,
+    emotion: EmotionResult,
 ) {
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    var faceMeshes: MutableList<FaceMesh> = remember { mutableStateListOf<FaceMesh>() }
-
     var size by remember { mutableStateOf(IntSize.Zero) }
-
-    val analyzer = FaceMeshDetectionAnalyzer { meshes, _, _ ->
-        faceMeshes.clear()         // Clear the current contents
-        faceMeshes.addAll(meshes)  // Add the new meshes to the existing list
-        viewModel.updateEmotionFromFaceMesh(if (meshes.isNotEmpty()) meshes.first() else null)
-    }
 
     Box(
         modifier = modifier
@@ -79,20 +70,11 @@ fun ScanSurface(
             .clipToBounds()
             .onSizeChanged { size = it }
     ) {
-        CameraPreview(
-            context = context,
-            lifecycleOwner = lifecycleOwner,
-            analyzer = analyzer,
-            showPreview = false,
-        )
-
         DrawFaces(
             faceMeshes = faceMeshes,
             targetHeight = size.height.toFloat(),
         )
 
-        // Display the current emotion
-        val emotion by viewModel.currentEmotion.collectAsState()
         Text(
             text = "Emotion: ${emotion.dominantEmotion}, Intensity: ${emotion.emotionIntensity}",
             color = Color.White,
@@ -114,7 +96,8 @@ fun DrawFaces(
         val targetWidth = (targetHeight / 1.618f)
         val targetLeft = (size.width - targetWidth) / 2f
         val targetTop = (size.height - targetHeight) / 2f
-        val targetRect = Rect(targetLeft, targetTop, targetLeft + targetWidth, targetTop + targetHeight)
+        val targetRect =
+            Rect(targetLeft, targetTop, targetLeft + targetWidth, targetTop + targetHeight)
 
         faceMeshes.forEach { face ->
             // Get the face bounding box in image coordinates
