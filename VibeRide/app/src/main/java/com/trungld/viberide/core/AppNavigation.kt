@@ -39,7 +39,7 @@ fun AppNavigation(
             enterTransition = { slideInHorizontally(initialOffsetX = { -it }) },
             exitTransition = { slideOutHorizontally(targetOffsetX = { -it }) },
             popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }) },
-            popExitTransition = { slideOutHorizontally(targetOffsetX = { it }) }
+            popExitTransition = { slideOutHorizontally(targetOffsetX = { -it }) }
         ) {
             LoginScreen(modifier, navController, authViewModel)
         }
@@ -48,7 +48,7 @@ fun AppNavigation(
             enterTransition = { slideInHorizontally(initialOffsetX = { -it }) },
             exitTransition = { slideOutHorizontally(targetOffsetX = { -it }) },
             popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }) },
-            popExitTransition = { slideOutHorizontally(targetOffsetX = { it }) }
+            popExitTransition = { slideOutHorizontally(targetOffsetX = { -it }) }
         ) {
             SignUpScreen(modifier, navController, authViewModel)
         }
@@ -57,16 +57,16 @@ fun AppNavigation(
             enterTransition = { slideInHorizontally(initialOffsetX = { -it }) },
             exitTransition = { slideOutHorizontally(targetOffsetX = { -it }) },
             popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }) },
-            popExitTransition = { slideOutHorizontally(targetOffsetX = { it }) }
+            popExitTransition = { slideOutHorizontally(targetOffsetX = { -it }) }
         ) {
-            HomeScreen(modifier, navController, authViewModel, audioViewModel, faceEmotionViewModel, cameraManager)
+            HomeScreen(modifier, navController, authViewModel, audioViewModel, faceEmotionViewModel)
         }
         composable(
             route = "now_playing",
             enterTransition = { slideInHorizontally(initialOffsetX = { it }) },
             exitTransition = { slideOutHorizontally(targetOffsetX = { it }) },
             popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }) },
-            popExitTransition = { slideOutHorizontally(targetOffsetX = { -it }) }
+            popExitTransition = { slideOutHorizontally(targetOffsetX = { it }) }
         ) {
             NowPlayingScreen(modifier, navController, audioViewModel)
         }
@@ -75,7 +75,7 @@ fun AppNavigation(
             enterTransition = { slideInHorizontally(initialOffsetX = { it }) },
             exitTransition = { slideOutHorizontally(targetOffsetX = { it }) },
             popEnterTransition = { slideInHorizontally(initialOffsetX = { -it }) },
-            popExitTransition = { slideOutHorizontally(targetOffsetX = { -it }) }
+            popExitTransition = { slideOutHorizontally(targetOffsetX = { it }) }
         ) { backStackEntry ->
             val query = backStackEntry.arguments?.getString("query") ?: ""
             SearchResultsScreen(

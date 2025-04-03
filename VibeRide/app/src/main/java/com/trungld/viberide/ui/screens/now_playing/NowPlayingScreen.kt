@@ -96,7 +96,7 @@ fun NowPlayingScreen(
                     MediaListCard(
                         modifier = modifier.weight(1f),
                         mediaItems = queueItems,
-                        onItemClick = { index ->
+                        onItemClick = { media, index ->
                             audioViewModel.onUiEvents(UIEvents.SelectedAudioChange(index))
                         },
                         title = "Next in queue",

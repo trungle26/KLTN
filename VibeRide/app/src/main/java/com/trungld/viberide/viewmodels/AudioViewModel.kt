@@ -18,7 +18,6 @@ import com.trungld.viberide.player.service.AudioState
 import com.trungld.viberide.player.service.PlayerEvent
 import com.trungld.viberide.player.service.VibeRideAudioServiceHandler
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -135,6 +134,35 @@ class AudioViewModel @Inject constructor(
         }
     }
 
+    // Add media to queue at position next to current playing media
+    fun addToQueueAndPlay(media: Media) {
+        _currentMediaIndex.value++
+        // add media to queue at current index
+        _queueMediaList.value = _queueMediaList.value.subList(
+            0,
+            _currentMediaIndex.value
+        ) + media + _queueMediaList.value.subList(
+            _currentMediaIndex.value,
+            _queueMediaList.value.size
+        )
+        // add media to audio service
+        val exoMedia = MediaItem.Builder()
+            .setUri(media.file_url)
+            .setMediaMetadata(createMediaMetadata(media))
+            .build()
+        audioServiceHandler.addMediaItem(mediaItem = exoMedia, index = _currentMediaIndex.value)
+        onUiEvents(UIEvents.SelectedAudioChange(_currentMediaIndex.value))
+    }
+
+    fun addToEndOfQueue(media: Media){
+        _queueMediaList.value = _queueMediaList.value + media
+        val exoMedia = MediaItem.Builder()
+            .setUri(media.file_url)
+            .setMediaMetadata(createMediaMetadata(media))
+            .build()
+        audioServiceHandler.addMediaItem(exoMedia)
+    }
+
     fun suggestMediaByEmotion(emotion: String) {
         viewModelScope.launch {
             _fetchingState.value = FetchingState.Loading
@@ -145,7 +173,8 @@ class AudioViewModel @Inject constructor(
                 mediaRepository.cacheMedia(recommended)
                 updateMediaItems()
             } catch (e: Exception) {
-                _fetchingState.value = FetchingState.Error(e.message ?: "Failed to load recommendations for $emotion")
+                _fetchingState.value =
+                    FetchingState.Error(e.message ?: "Failed to load recommendations for $emotion")
             }
         }
         _recommendedMediaList.value
@@ -161,7 +190,8 @@ class AudioViewModel @Inject constructor(
                 Log.d("Search Media", "searchMedia: found ${results.size} results for query $query")
                 mediaRepository.cacheMedia(results)
             } catch (e: Exception) {
-                _searchResultsState.value = FetchingState.Error(e.message ?: "Failed to search media")
+                _searchResultsState.value =
+                    FetchingState.Error(e.message ?: "Failed to search media")
             }
         }
     }
@@ -181,6 +211,7 @@ class AudioViewModel @Inject constructor(
         val metadata = MediaMetadata.Builder()
             .setArtist(media.artist)
             .setDisplayTitle(media.title)
+            .setTitle(media.title)
             .setGenre(media.genre.toString())
         if (media.type == "audio") {
             metadata.setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
@@ -230,7 +261,7 @@ sealed class UIState {
     object Ready : UIState()
 }
 
-sealed class FetchingState{
+sealed class FetchingState {
     object Initial : FetchingState()
     object Loading : FetchingState()
     data class Success(val mediaList: List<Media>) : FetchingState()

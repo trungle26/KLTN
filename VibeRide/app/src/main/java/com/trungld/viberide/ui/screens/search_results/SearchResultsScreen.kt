@@ -1,6 +1,7 @@
 package com.trungld.viberide.ui.screens.search_results
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,11 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,7 +44,7 @@ fun SearchResultsScreen(
     modifier: Modifier = Modifier,
     query: String,
     navController: NavController,
-    audioViewModel: AudioViewModel // Assume this provides searchResultsState
+    audioViewModel: AudioViewModel
 ) {
     val searchResultsState = audioViewModel.searchResultsState.collectAsState()
 
@@ -68,14 +66,14 @@ fun SearchResultsScreen(
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
                             tint = Color.White
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent // Material 3 way for transparent background
+                    containerColor = Color.Transparent
                 )
             )
         }
@@ -130,8 +128,19 @@ fun SearchResultsScreen(
                                         TopResultCard(
                                             modifier = Modifier.weight(1f),
                                             media = topResult,
-                                            onPlayClick = { /* TODO: Play media */ },
-                                            onAddClick = { /* TODO: Add to playlist */ }
+                                            onPlayClick = {
+                                                audioViewModel.addToQueueAndPlay(topResult)
+                                                navController.popBackStack()
+                                                navController.navigate("now_playing")
+                                            },
+                                            onAddClick = {
+                                                audioViewModel.addToEndOfQueue(topResult)
+                                                Toast.makeText(
+                                                    navController.context,
+                                                    "Added to queue",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
                                         )
                                         Spacer(modifier = Modifier.height(16.dp))
                                     }
@@ -147,7 +156,11 @@ fun SearchResultsScreen(
                                             mediaItems = mediaItems,
                                             title = "Songs",
                                             maxItems = 3,
-                                            onItemClick = { index -> /* TODO: Handle song click */ },
+                                            onItemClick = {media, index ->
+                                                audioViewModel.addToQueueAndPlay(media)
+                                                navController.popBackStack()
+                                                navController.navigate("now_playing")
+                                            },
                                         )
 
                                     }

@@ -28,7 +28,18 @@ class FaceEmotionViewModel @Inject constructor() : ViewModel() {
     val yawnCount: StateFlow<Int> = _yawnCount
 
     private val emotionHistory = mutableListOf<EmotionResult>()
-    private val historySize = 5 // Smooth over last 5 frames
+    private val historySize = 1 // Smooth over last 5 frames
+
+    // Yawn detection properties
+    private val yawnThreshold = 0.5f // Mouth height threshold for a yawn (adjustable)
+    private val yawnCountThreshold = 3 // Number of yawns in a minute to trigger alert
+    private val yawnCountWindow = 60_000L // 1 minute in milliseconds
+    private val yawnTimestamps = mutableListOf<Long>() // Tracks yawn occurrences
+
+    // Eye closure detection properties
+    private val eyeClosureThreshold = 0.2f // EAR threshold for closed eyes (adjustable)
+    private val eyeClosureDurationThreshold = 2000L // 2 seconds in milliseconds
+    private var eyeClosureStartTime: Long? = null // Tracks start of eye closure
 
     fun updateEmotionFromFaceMesh(faceMesh: FaceMesh?) {
         if (faceMesh == null) {
@@ -147,6 +158,33 @@ class FaceEmotionViewModel @Inject constructor() : ViewModel() {
         }
         if (avgEyeOpenness < 0.035f) {
             sleepyScore += (0.035f - avgEyeOpenness) * 20f
+        }
+
+        // *** New Feature: Yawn Detection ***
+        val isYawning = mouthHeight > yawnThreshold && mouthWidth > 0.25f
+        if (isYawning) {
+            val currentTime = System.currentTimeMillis()
+            yawnTimestamps.add(currentTime)
+            // Remove timestamps outside the 1-minute window
+            yawnTimestamps.removeAll { it < currentTime - yawnCountWindow }
+            if (yawnTimestamps.size >= yawnCountThreshold) {
+//                triggerAlert("Yawn detected multiple times. Consider taking a break.")
+            }
+        }
+
+        // *** New Feature: Eye Closure Detection ***
+        val isEyesClosed = avgEyeOpenness < eyeClosureThreshold
+        if (isEyesClosed) {
+            if (eyeClosureStartTime == null) {
+                eyeClosureStartTime = System.currentTimeMillis()
+            } else {
+                val closureDuration = System.currentTimeMillis() - eyeClosureStartTime!!
+                if (closureDuration > eyeClosureDurationThreshold) {
+//                    triggerAlert("Eyes closed for too long. Stay alert!")
+                }
+            }
+        } else {
+            eyeClosureStartTime = null // Reset when eyes reopen
         }
 
         // Normalize scores (your tuned values)

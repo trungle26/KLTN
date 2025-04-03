@@ -1,33 +1,40 @@
 package com.trungld.viberide.ui.screens.home
 
-import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.PersonPin
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.trungld.viberide.core.CameraManager
 import com.trungld.viberide.ui.screens.shared.components.FaceMeshDetectionView
 import com.trungld.viberide.ui.screens.shared.components.LoadingIndicator
+import com.trungld.viberide.ui.screens.shared.components.cards.CardContainer
 import com.trungld.viberide.ui.screens.shared.components.cards.MediaControlCard
 import com.trungld.viberide.ui.screens.shared.components.cards.MediaListCard
 import com.trungld.viberide.ui.screens.shared.components.cards.MoodDetectionCard
 import com.trungld.viberide.ui.screens.shared.components.cards.YawnDetectionCard
 import com.trungld.viberide.viewmodels.AudioViewModel
-import com.trungld.viberide.viewmodels.AuthState
 import com.trungld.viberide.viewmodels.AuthViewModel
 import com.trungld.viberide.viewmodels.Emotion
 import com.trungld.viberide.viewmodels.FaceEmotionViewModel
 import com.trungld.viberide.viewmodels.FetchingState
 import com.trungld.viberide.viewmodels.UIEvents
+import com.trungld.viberide.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,8 +44,9 @@ fun HomeScreen(
     authViewModel: AuthViewModel,
     audioViewModel: AudioViewModel,
     faceEmotionViewModel: FaceEmotionViewModel,
-    cameraManager: CameraManager
 ) {
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+
     val authState = authViewModel.authState.observeAsState()
     val fetchingState by audioViewModel.fetchingState.collectAsState()
     val context = LocalContext.current
@@ -58,35 +66,22 @@ fun HomeScreen(
 
     // Map emotions to gradient colors
     val (startColor, endColor) = when (emotion.dominantEmotion) {
-        is Emotion.Happy -> Color(0xFFFFD700) to Color(0xFFFFA500) // Gold to Orange
-        is Emotion.Sad -> Color(0xFF1E90FF) to Color(0xFF00BFFF)   // DodgerBlue to DeepSkyBlue
-        is Emotion.Angry -> Color(0xFFFF4500) to Color(0xFFDC143C) // OrangeRed to Crimson
-        is Emotion.Calm -> Color(0xFF7FFFD4) to Color(0xFF00FA9A)  // Aquamarine to MediumSpringGreen
-        is Emotion.Unrecognized -> Color(0xFFFFD700) to Color(0xFFA9A9A9)    // Gray to DarkGray
+        is Emotion.Happy -> Color(0xffc2a200) to Color(0xFFFFA500) // Gold to Orange
+        is Emotion.Sad -> Color(0xFF00074a) to Color(0xFF00074a)   // DodgerBlue to DeepSkyBlue
+        is Emotion.Angry -> Color(0xFF63000a) to Color(0xFF63000a) // OrangeRed to Crimson
+        is Emotion.Calm -> Color(0xFF610063) to Color(0xFF610063)  // Aquamarine to MediumSpringGreen
+        else -> Color(0xFFA9A9A9) to Color(0xFFA9A9A9)    // Gray to DarkGray
     }
 
     // Animate the colors
     val animatedStartColor by animateColorAsState(
         targetValue = startColor,
-        animationSpec = tween(durationMillis = 500), label = "" // 500ms transition
+        animationSpec = tween(durationMillis = 1500), label = "" // 500ms transition
     )
     val animatedEndColor by animateColorAsState(
         targetValue = endColor,
-        animationSpec = tween(durationMillis = 500), label = ""
+        animationSpec = tween(durationMillis = 1500), label = ""
     )
-
-    LaunchedEffect(authState.value) {
-        when (authState.value) {
-            is AuthState.Unauthenticated -> {
-                navController.navigate("login") {
-                    popUpTo("home") { inclusive = true }
-                    launchSingleTop = true
-                }
-            }
-
-            else -> {}
-        }
-    }
 
     if (recommendedMediaItems.isEmpty()) {
         LaunchedEffect(emotionString) {
@@ -95,80 +90,123 @@ fun HomeScreen(
     }
 
     Scaffold(
-        modifier = Modifier
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(animatedStartColor, animatedEndColor)
-                )
-            ),
+        modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(
-                authState = authState.value,
-                signOut = {
-                    try {
-                        authViewModel.signOut()
-                    } catch (e: Exception) {
-                        Toast.makeText(
-                            context,
-                            "Error logging out: ${e.message}",
-                            Toast.LENGTH_SHORT
-                        ).show()
+            CenterAlignedTopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.DarkGray.copy(alpha = 0.2f),
+                    titleContentColor = MaterialTheme.colorScheme.primary,
+                ),
+                title = {
+                },
+                navigationIcon = {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                        contentDescription = "Logo",
+                        modifier = Modifier.width(200.dp).height(90.dp),
+                        contentScale = ContentScale.FillWidth
+                    )
+                },
+                actions = {
+                    IconButton(onClick = {
+                        // navigate to search input screen
+                        navController.navigate("search_input")
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "Search"
+                        )
+                    }
+                    IconButton(onClick = {
+                        // show account dialog
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.PersonPin,
+                            contentDescription = "Account"
+                        )
                     }
                 },
-                logIn = {
-                    navController.navigate("login")
-                },
-                signUp = {
-                    navController.navigate("signup")
-                },
-                onSearch = { query ->
-                    navController.navigate("search_results/$query")
-                }
+                scrollBehavior = scrollBehavior,
             )
+//            TopAppBar(
+//                authState = authState.value,
+//                signOut = {
+//                    try {
+//                        authViewModel.signOut()
+//                    } catch (e: Exception) {
+//                        Toast.makeText(
+//                            context,
+//                            "Error logging out: ${e.message}",
+//                            Toast.LENGTH_SHORT
+//                        ).show()
+//                    }
+//                },
+//                logIn = {
+//                    navController.navigate("login")
+//                },
+//                signUp = {
+//                    navController.navigate("signup")
+//                },
+//                onSearch = { query ->
+//                    navController.navigate("search_results/$query")
+//                }
+//            )
         }
     ) {
-        Surface(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Transparent)
+                .background(
+                    brush = Brush.linearGradient(
+                        colorStops = arrayOf(
+                            0.0f to animatedStartColor,  // Top edge kicks off with start color
+                            0.2f to animatedEndColor,    // At 20%, we hit the end color
+                            1.0f to Color.Black          // Bottom fades to black
+                        ),
+                    ),
+                    alpha = 0.2f
+                )
                 .padding(it)
+                .padding(20.dp)
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxSize(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                if (fetchingState is FetchingState.Loading) {
-                    LoadingIndicator(modifier = Modifier.weight(1f))
-                } else
-                    MediaListCard(
-                        modifier = Modifier
-                            .weight(1f),
-                        mediaItems = recommendedMediaItems,
-                        maxItems = 3,
-                        onItemClick = { index ->
-                            audioViewModel.apply {
-                                updateMediaItems()
-                                onUiEvents(UIEvents.SelectedAudioChange(index))
-                            }
-                        },
-                        title = "Recommended for your mood"
-                    )
+                CardContainer(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clipToBounds(),
+                    color = animatedStartColor
+                ) {
+                    if (fetchingState is FetchingState.Loading) {
+                        LoadingIndicator(modifier = Modifier.fillMaxSize())
+                    } else
+                        MediaListCard(
+                            modifier = Modifier.fillMaxSize(),
+                            mediaItems = recommendedMediaItems,
+                            maxItems = Int.MAX_VALUE,
+                            onItemClick = { media, index ->
+                                audioViewModel.apply {
+                                    updateMediaItems()
+                                    onUiEvents(UIEvents.SelectedAudioChange(index))
+                                }
+                            },
+                            title = "Recommended for your mood"
+                        )
+                }
                 Spacer(modifier = Modifier.width(16.dp))
 
-                Column(
-                    modifier = Modifier.weight(1f)
+                CardContainer(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clipToBounds(),
+                    color = animatedStartColor
                 ) {
-                    YawnDetectionCard(
-                        modifier = Modifier.weight(2f),
-                        emotion = emotion,
-                        yawnCount = yawnCount
-                    ){
-                        faceEmotionViewModel.onYawnDetected()
-                    }
                     MediaControlCard(
                         modifier = Modifier
-                            .weight(3f),
+                            .weight(1f),
                         exoPlayer = audioViewModel.audioServiceHandler.exoPlayer,
                         isPlaying = audioViewModel.isPlaying,
                         onReplayClick = { audioViewModel.onUiEvents(UIEvents.Backward) },
@@ -182,21 +220,48 @@ fun HomeScreen(
                     )
                 }
 
+
                 Spacer(modifier = Modifier.width(16.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
-                    FaceMeshDetectionView(
+
+                    CardContainer(
                         modifier = Modifier
-                            .weight(1f),
-                        faceMeshes,
-                        emotion
-                    )
+                            .weight(1f)
+                            .clipToBounds(),
+                        color = animatedStartColor
+                    ) {
+                        MoodDetectionCard(
+                            modifier = Modifier.weight(1f), emotion = emotion,
+                            onPlayPlaylist = { audioViewModel.suggestMediaByEmotion(emotionString) },
+                            isFetching = fetchingState is FetchingState.Loading
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(16.dp))
-                    MoodDetectionCard(
-                        modifier = Modifier.weight(1f), emotion = emotion,
-                        onPlayPlaylist = { audioViewModel.suggestMediaByEmotion(emotionString) },
-                        isFetching = fetchingState is FetchingState.Loading
-                    )
+                    CardContainer(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clipToBounds(),
+                        color = animatedStartColor
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            YawnDetectionCard(
+                                modifier = Modifier.weight(1f),
+                                emotion = emotion,
+                                yawnCount = yawnCount
+                            ) {
+                                faceEmotionViewModel.onYawnDetected()
+                            }
+                            FaceMeshDetectionView(
+                                modifier = Modifier
+                                    .weight(1f),
+                                faceMeshes,
+                            )
+                        }
+                    }
                 }
             }
 

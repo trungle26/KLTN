@@ -42,10 +42,10 @@ fun SearchBar(
         modifier = modifier
             .height(61.dp)
             .padding(2.dp)
-            .shadow(4.dp, RoundedCornerShape(20.dp)) // Apply shadow with rounded corners
             .background(
-                color = Color.DarkGray,
-            )
+                color = Color.White.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(10.dp)
+            ),
     ) {
         var searchText by remember { mutableStateOf("") }
         TextField(
@@ -76,9 +76,9 @@ fun SearchBar(
                 unfocusedIndicatorColor = Color.Transparent, // Remove the unfocused indicator
                 disabledIndicatorColor = Color.Transparent, // Remove the disabled indicator
             ),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search), // Set enter key to "Search"
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), // Set enter key to "Search"
             keyboardActions = KeyboardActions(
-                onSearch = {
+                onDone = {
                     if (searchText.isNotEmpty()) onSearch(searchText) // Trigger search on enter
                 }
             )

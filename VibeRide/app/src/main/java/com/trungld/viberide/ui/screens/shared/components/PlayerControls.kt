@@ -4,12 +4,16 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.ShapeDefaults
+import androidx.compose.material3.Shapes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.trungld.viberide.R
 import com.trungld.viberide.ui.theme.VibeRideTheme
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PlayerControls(
     modifier: Modifier = Modifier,
@@ -30,12 +35,12 @@ fun PlayerControls(
     onForwardClick: () -> Unit
 ) {
     Row(
-        modifier = modifier.background(Color.DarkGray.copy(alpha = 0.6f)),
+        modifier = modifier.background(Color.Transparent),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
         //replay button
-        IconButton(modifier = Modifier.size(100.dp), onClick = onReplayClick) {
+        IconButton(modifier = Modifier.size(70.dp), onClick = onReplayClick) {
             Image(
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.FillHeight,
@@ -45,7 +50,15 @@ fun PlayerControls(
         }
 
         //pause/play toggle button
-        IconButton(modifier = Modifier.size(100.dp), onClick = onPauseToggle) {
+        IconButton(
+            modifier = Modifier
+                .size(100.dp)
+                .background(color = Color(0xff14161a), shape = CircleShape)
+            ,
+            onClick = onPauseToggle,
+            shape = IconButtonDefaults.largeRoundShape,
+
+        ) {
             Image(
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.FillHeight,
@@ -57,7 +70,7 @@ fun PlayerControls(
         }
 
         //forward button
-        IconButton(modifier = Modifier.size(100.dp), onClick = onForwardClick) {
+        IconButton(modifier = Modifier.size(70.dp), onClick = onForwardClick) {
             Image(
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.FillHeight,

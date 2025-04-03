@@ -44,7 +44,6 @@ class MainActivity : ComponentActivity() {
                     faceEmotionViewModel = faceEmotionViewModel,
                     cameraManager = cameraManager,
                 )
-
             }
         }
         val intent = Intent(this, VibeRideAudioService::class.java)

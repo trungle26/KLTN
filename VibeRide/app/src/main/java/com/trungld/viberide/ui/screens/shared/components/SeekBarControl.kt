@@ -82,7 +82,6 @@ fun SeekBarControl(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                modifier = Modifier.padding(horizontal = 16.dp),
                 text = videoTime.formatMinSec() + " · " + duration.formatMinSec(),
                 color = Color.LightGray
             )

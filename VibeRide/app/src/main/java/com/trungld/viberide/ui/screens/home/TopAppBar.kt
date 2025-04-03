@@ -1,5 +1,7 @@
 package com.trungld.viberide.ui.screens.home
 
+import android.content.res.Configuration
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.trungld.viberide.ui.screens.shared.components.ProfilePicture
@@ -37,7 +40,7 @@ fun TopAppBar(
     Row(
         modifier = modifier
             .padding(20.dp)
-            .fillMaxWidth(),
+            .background(Color.DarkGray),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -85,7 +88,7 @@ fun TopAppBar(
     }
 }
 
-@Preview(showSystemUi = true)
+@Preview(showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun TopAppBarPreview() {
     TopAppBar(

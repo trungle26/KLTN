@@ -63,17 +63,16 @@ fun MediaItem(
         Column {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyMedium.copy(
+                style = MaterialTheme.typography.bodyLarge.copy(
                     color = Color.White
                 ),
-                fontSize = 14.sp,
+                fontSize = 19.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = artist,
-                style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
-                fontSize = 16.sp,
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -91,7 +90,7 @@ private fun MediaItemPreview() {
             thumbnailUrl = "https://example.com/thumbnail.jpg",
             title = "Example Title",
             artist = "Example Artist",
-            onItemClick = TODO()
+            onItemClick = {  }
         )
     }
 }

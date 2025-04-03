@@ -3,10 +3,9 @@ package com.trungld.viberide.ui.screens.shared.components
 import android.Manifest
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
@@ -18,20 +17,17 @@ import androidx.compose.ui.graphics.toComposeRect
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionRequired
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.mlkit.vision.facemesh.FaceMesh
 import com.trungld.viberide.ui.screens.shared.utils.PositionUtils.mapFacePointToTarget
-import com.trungld.viberide.viewmodels.EmotionResult
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun FaceMeshDetectionView(
     modifier: Modifier = Modifier,
     faceMeshes: List<FaceMesh>,
-    emotion: EmotionResult,
 ) {
     val context = LocalContext.current
     val cameraPermissionState =
@@ -51,7 +47,7 @@ fun FaceMeshDetectionView(
             }
         },
         content = {
-            ScanSurface(modifier.fillMaxSize(), faceMeshes,emotion)
+            ScanSurface(modifier.fillMaxSize(), faceMeshes)
         }
     )
 }
@@ -60,7 +56,6 @@ fun FaceMeshDetectionView(
 fun ScanSurface(
     modifier: Modifier = Modifier,
     faceMeshes: List<FaceMesh>,
-    emotion: EmotionResult,
 ) {
     var size by remember { mutableStateOf(IntSize.Zero) }
 
@@ -68,19 +63,12 @@ fun ScanSurface(
         modifier = modifier
             .fillMaxSize()
             .clipToBounds()
+            .background(Color.Transparent)
             .onSizeChanged { size = it }
     ) {
         DrawFaces(
             faceMeshes = faceMeshes,
             targetHeight = size.height.toFloat(),
-        )
-
-        Text(
-            text = "Emotion: ${emotion.dominantEmotion}, Intensity: ${emotion.emotionIntensity}",
-            color = Color.White,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(16.dp)
         )
     }
 }

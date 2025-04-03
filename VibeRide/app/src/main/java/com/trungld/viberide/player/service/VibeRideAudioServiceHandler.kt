@@ -26,8 +26,8 @@ class VibeRideAudioServiceHandler @Inject constructor(
         exoPlayer.addListener(this)
     }
 
-    fun addMediaItem(mediaItem: List<MediaItem>) {
-        exoPlayer.addMediaItems(mediaItem)
+    fun addMediaItem(mediaItem: MediaItem, index: Int = Int.MAX_VALUE) {
+        exoPlayer.addMediaItem(index,mediaItem)
         exoPlayer.prepare()
     }
 
