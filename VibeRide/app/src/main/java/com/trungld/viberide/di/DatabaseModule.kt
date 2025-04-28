@@ -2,12 +2,8 @@ package com.trungld.viberide.di
 
 import android.content.Context
 import androidx.room.Room
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
-import com.trungld.viberide.data.AppDatabase
-import com.trungld.viberide.data.dao.MediaDao
-import com.trungld.viberide.data.repository.MediaRepository
-import com.trungld.viberide.data.repository.MediaRepositoryImpl
+import com.trungld.viberide.data.datasource.local.AppDatabase
+import com.trungld.viberide.data.datasource.local.dao.MediaDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

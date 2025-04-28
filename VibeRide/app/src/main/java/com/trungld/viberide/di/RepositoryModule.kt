@@ -1,6 +1,6 @@
 package com.trungld.viberide.di
 
-import com.trungld.viberide.data.repository.MediaRepository
+import com.trungld.viberide.domain.repository.MediaRepository
 import com.trungld.viberide.data.repository.MediaRepositoryImpl
 import dagger.Binds
 import dagger.Module

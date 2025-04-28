@@ -10,8 +10,8 @@ import androidx.media3.session.MediaSession
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import com.trungld.viberide.player.notification.VibeRideAudioNotificationManager
-import com.trungld.viberide.player.service.VibeRideAudioServiceHandler
+import com.trungld.viberide.core.VibeRideAudioNotificationManager
+import com.trungld.viberide.data.service.VibeRideAudioServiceHandler
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -61,11 +61,6 @@ object MediaModule {
         context = context,
         exoPlayer = player
     )
-
-    @Provides
-    @Singleton
-    fun provideServiceHandler(exoPlayer: ExoPlayer): VibeRideAudioServiceHandler =
-        VibeRideAudioServiceHandler(exoPlayer)
 
     @Provides
     @Singleton

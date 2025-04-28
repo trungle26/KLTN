@@ -46,6 +46,7 @@ android {
     room {
         schemaDirectory("$projectDir/schemas")
     }
+
 }
 
 dependencies {
@@ -123,6 +124,16 @@ dependencies {
     // Icon, Material3
     implementation ("androidx.compose.material:material-icons-extended:$2025.01.00")
     implementation("androidx.compose.material3:material3:1.4.0-alpha10")
+
+
+    // Mockito
+    testImplementation ("org.mockito:mockito-core:5.12.0")
+    testImplementation ("org.mockito:mockito-inline:5.2.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+
+    // Kotlin Coroutines Test
+    testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
+    testImplementation ("androidx.arch.core:core-testing:2.1.0")
 
 }
 

@@ -8,12 +8,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.ui.Modifier
-import com.trungld.viberide.player.service.VibeRideAudioService
-import com.trungld.viberide.ui.theme.VibeRideTheme
-import com.trungld.viberide.viewmodels.AudioViewModel
-import com.trungld.viberide.viewmodels.AuthViewModel
-import com.trungld.viberide.viewmodels.FaceEmotionViewModel
+import com.trungld.viberide.data.datasource.ai.CameraManager
+import com.trungld.viberide.data.datasource.ai.FaceMeshDetectionAnalyzer
+import com.trungld.viberide.data.service.VibeRideAudioService
+import com.trungld.viberide.presentation.theme.VibeRideTheme
+import com.trungld.viberide.presentation.viewmodels.AudioViewModel
+import com.trungld.viberide.presentation.viewmodels.AuthViewModel
+import com.trungld.viberide.presentation.viewmodels.FaceEmotionViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -42,7 +43,6 @@ class MainActivity : ComponentActivity() {
                     authViewModel = authViewModel,
                     audioViewModel = audioViewModel,
                     faceEmotionViewModel = faceEmotionViewModel,
-                    cameraManager = cameraManager,
                 )
             }
         }

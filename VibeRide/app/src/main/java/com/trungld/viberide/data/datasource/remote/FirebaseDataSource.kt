@@ -1,24 +1,22 @@
-package com.trungld.viberide.data.repository
+package com.trungld.viberide.data.datasource.remote
 
 import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import com.trungld.viberide.data.datasource.local.dao.MediaDao
 import com.trungld.viberide.domain.entity.Media
-import com.trungld.viberide.domain.repository.MediaRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-class MediaRepositoryImpl @Inject constructor(
+class FirebaseDataSource @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val storage: FirebaseStorage,
-    private val mediaDao: MediaDao
-) : MediaRepository {
+    private val auth: FirebaseAuth,
+) {
 
     private val emotionToGenreMap = mapOf(
         "Happy" to listOf("Upbeat", "Pop", "Dance"),
@@ -28,7 +26,7 @@ class MediaRepositoryImpl @Inject constructor(
         "Neutral" to listOf("Pop", "Indie")
     )
 
-    override suspend fun getRecommendationsByEmotion(emotion: String, limit: Long): List<Media> {
+    suspend fun getRecommendationsByEmotion(emotion: String, limit: Long): List<Media> {
         val genres = emotionToGenreMap[emotion] ?: emotionToGenreMap["Neutral"] ?: emptyList()
 
         // Fetch Firestore docs
@@ -51,10 +49,15 @@ class MediaRepositoryImpl @Inject constructor(
                     try {
                         Log.d("MediaRepository", "Processing URL for: ${media.file_url}")
                         val fileRef = storage.getReferenceFromUrl(media.file_url)
-                        val fileUrl = fileRef.downloadUrl.await().toString() // Safe in async coroutine
+                        val fileUrl =
+                            fileRef.downloadUrl.await().toString() // Safe in async coroutine
                         media.copy(file_url = fileUrl)
                     } catch (e: Exception) {
-                        Log.e("MediaRepository", "Failed to get URL for ${media.file_url}: ${e.message}", e)
+                        Log.e(
+                            "MediaRepository",
+                            "Failed to get URL for ${media.file_url}: ${e.message}",
+                            e
+                        )
                         media // Return original media if URL fetch fails
                     }
                 }
@@ -62,7 +65,7 @@ class MediaRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun searchMediaFromFirestore(query: String): List<Media> {
+    suspend fun searchMediaFromFirestore(query: String): List<Media> {
         val query = query.trim().lowercase()
         if (query.isEmpty()) {
             Log.d("Search Media", "searchMediaFromFirestore: Query is empty")
@@ -90,10 +93,15 @@ class MediaRepositoryImpl @Inject constructor(
                     try {
                         Log.d("MediaRepository", "Processing URL for: ${media.file_url}")
                         val fileRef = storage.getReferenceFromUrl(media.file_url)
-                        val fileUrl = fileRef.downloadUrl.await().toString() // Safe in async coroutine
+                        val fileUrl =
+                            fileRef.downloadUrl.await().toString() // Safe in async coroutine
                         media.copy(file_url = fileUrl)
                     } catch (e: Exception) {
-                        Log.e("MediaRepository", "Failed to get URL for ${media.file_url}: ${e.message}", e)
+                        Log.e(
+                            "MediaRepository",
+                            "Failed to get URL for ${media.file_url}: ${e.message}",
+                            e
+                        )
                         media // Return original media if URL fetch fails
                     }
                 }
@@ -101,51 +109,37 @@ class MediaRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun cacheMedia(media: List<Media>) {
-        mediaDao.insertAll(media)
-    }
-
-    override fun getCachedMedia(): Flow<List<Media>> {
-        return mediaDao.getAllMedia()
-    }
-
-    override suspend fun getFavorites(userId: String): List<Media> = withContext(Dispatchers.IO) {
+    suspend fun getFavorites(userId: String): List<Media> = withContext(Dispatchers.IO) {
         try {
-            // Step 1: Get favorite media IDs from 'favorites' collection
             val favoritesSnapshot = firestore.collection("favorites")
                 .whereEqualTo("user_uid", userId)
                 .get()
                 .await()
 
-            val favoriteMediaIds = favoritesSnapshot.documents.mapNotNull { it.getString("media_id") }
+            val favoriteMediaIds =
+                favoritesSnapshot.documents.mapNotNull { it.getString("media_id") }
             if (favoriteMediaIds.isEmpty()) return@withContext emptyList()
 
-            // Step 2: Fetch Media objects (try local first, then Firestore if needed)
-            val localMedia = mediaDao.getMediaByIds(favoriteMediaIds)
-            val fetchedMediaIds = localMedia.map { it.id }.toSet()
-            val missingMediaIds = favoriteMediaIds.filter { it !in fetchedMediaIds }
+            val mediaSnapshot = firestore.collection("media")
+                .whereIn("id", favoriteMediaIds)
+                .get()
+                .await()
+            val firestoreMedia = mediaSnapshot.toObjects(Media::class.java)
 
-            // If some media aren't in local DB, fetch from Firestore
-            val firestoreMedia = if (missingMediaIds.isNotEmpty()) {
-                val mediaSnapshot = firestore.collection("media")
-                    .whereIn("id", missingMediaIds)
-                    .get()
-                    .await()
-                mediaSnapshot.toObjects(Media::class.java)
-            } else {
-                emptyList()
-            }
-
-            val mediaItems = localMedia + firestoreMedia
-            return@withContext mediaItems.map { media ->
+            return@withContext firestoreMedia.map { media ->
                 async {
                     try {
                         Log.d("MediaRepository", "Processing URL for: ${media.file_url}")
                         val fileRef = storage.getReferenceFromUrl(media.file_url)
-                        val fileUrl = fileRef.downloadUrl.await().toString() // Safe in async coroutine
+                        val fileUrl =
+                            fileRef.downloadUrl.await().toString() // Safe in async coroutine
                         media.copy(file_url = fileUrl)
                     } catch (e: Exception) {
-                        Log.e("MediaRepository", "Failed to get URL for ${media.file_url}: ${e.message}", e)
+                        Log.e(
+                            "MediaRepository",
+                            "Failed to get URL for ${media.file_url}: ${e.message}",
+                            e
+                        )
                         media // Return original media if URL fetch fails
                     }
                 }
@@ -156,7 +150,7 @@ class MediaRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun addToFavorites(userId: String, mediaId: String) = withContext(Dispatchers.IO) {
+    suspend fun addToFavorites(userId: String, mediaId: String) = withContext(Dispatchers.IO) {
         try {
             val favoriteData = hashMapOf(
                 "user_uid" to userId,
@@ -167,11 +161,14 @@ class MediaRepositoryImpl @Inject constructor(
                 .await()
             Log.d("Add to Favorites", "Added $mediaId to favorites for user $userId")
         } catch (e: Exception) {
-            Log.d("Add to Favorites", "Error adding $mediaId to favorites for user $userId: ${e.message}")
+            Log.d(
+                "Add to Favorites",
+                "Error adding $mediaId to favorites for user $userId: ${e.message}"
+            )
         }
     }
 
-    override suspend fun removeFromFavorites(userId: String, mediaId: String) = withContext(Dispatchers.IO) {
+    suspend fun removeFromFavorites(userId: String, mediaId: String) = withContext(Dispatchers.IO) {
         try {
             val querySnapshot = firestore.collection("favorites")
                 .whereEqualTo("user_uid", userId)
