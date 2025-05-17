@@ -142,7 +142,7 @@ class FaceEmotionViewModel @Inject constructor() : ViewModel() {
             sleepyScore += (mouthWidth - 0.25f) * 8f // Add width contribution
         }
         if (avgEyeOpenness < 0.035f) {
-            sleepyScore += (0.035f - avgEyeOpenness) * 20f
+            sleepyScore += (0.035f - avgEyeOpenness) * 29f
         }
 
         // Normalize scores based on bias

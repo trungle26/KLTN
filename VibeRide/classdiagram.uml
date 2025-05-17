@@ -1,0 +1,34 @@
+@startuml
+package "view" {
+  [HomeScreen] --> [AudioViewModel]
+  [MainActivity] --> [AudioViewModel]
+  [MainActivity] --> [AuthViewModel]
+  [MainActivity] --> [FaceEmotionViewModel]
+}
+
+package "viewmodel" {
+  [AudioViewModel] o--> [AudioServiceHandler]
+  [AudioViewModel] --> [MediaRepository]
+  [AuthViewModel] --> [MediaRepository]
+  [FaceEmotionViewModel] --> [CameraManager]
+}
+
+package "model" {
+  [MediaRepository] <|.. [MediaRepositoryImpl]
+  [MediaRepositoryImpl] --> [FirebaseFirestore]
+  [MediaRepositoryImpl] --> [MediaDao]
+  [MediaDao] --> [AppDatabase]
+  [AudioServiceHandler] --> [MediaLibraryService]
+  [MediaLibraryService] o--> [ExoPlayer]
+  [MediaLibraryService] --> [MediaLibrarySession]
+  [MediaRepository] --> [Media]
+  [FaceEmotionViewModel] --> [FaceMeshDetectionAnalyzer]
+}
+
+[HomeScreen] : @Composable; onUiEvents()
+[AudioViewModel] : player: Player?; audioState: StateFlow; onUiEvents()
+[AudioServiceHandler] : mediaController: MediaController?; addMediaItem()
+[MediaLibraryService] : exoPlayer: ExoPlayer; mediaSession: MediaLibrarySession
+[MediaRepository] : getRecommendationsByEmotion(); searchMedia()
+[Media] : file_url; title; artist
+@enduml
